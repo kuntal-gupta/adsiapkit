@@ -1,0 +1,38 @@
+{
+  "name": "com.puzzlecraftgames.adsiapkit",
+  "version": "1.0.0",
+  "displayName": "Ads & IAP Kit",
+  "description": "One API for mobile ads and in-app purchases. Switch between AdMob, Unity Ads, IronSource and AppLovin MAX from a setup window, with Unity IAP 5, Google UMP consent and iOS App Tracking Transparency built in.\n\nAd and IAP SDKs are optional: install only the ones you use.",
+  "unity": "2022.3",
+  "documentationUrl": "https://github.com/pixelsbd-solution/word-finder-crossword-puzzles/blob/main/Packages/com.puzzlecraftgames.adsiapkit/README.md",
+  "changelogUrl": "https://github.com/pixelsbd-solution/word-finder-crossword-puzzles/blob/main/Packages/com.puzzlecraftgames.adsiapkit/CHANGELOG.md",
+  "licensesUrl": "https://github.com/pixelsbd-solution/word-finder-crossword-puzzles/blob/main/Packages/com.puzzlecraftgames.adsiapkit/LICENSE.md",
+  "author": {
+    "name": "PuzzleCraft Games",
+    "email": "support@puzzlecraftgames.com"
+  },
+  "keywords": [
+    "ads",
+    "iap",
+    "admob",
+    "unity ads",
+    "ironsource",
+    "levelplay",
+    "applovin",
+    "max",
+    "in-app purchase",
+    "consent",
+    "gdpr",
+    "ump",
+    "att",
+    "monetization"
+  ],
+  "category": "Monetization",
+  "samples": [
+    {
+      "displayName": "Basic Integration",
+      "description": "A drop-in script with buttons for banner, interstitial, rewarded ads, purchases, restore and privacy options.",
+      "path": "Samples~/BasicIntegration"
+    }
+  ]
+}
