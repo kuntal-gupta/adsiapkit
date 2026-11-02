@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace AdsIAPKit
@@ -20,6 +21,84 @@ namespace AdsIAPKit
         {
             return products.Find(p => p.id == productId);
         }
+
+        /// <summary>
+        /// Products to list in a shop, in catalog order: enabled, not hidden, and in the category
+        /// when one is given (empty means every category).
+        /// </summary>
+        public List<IAPProduct> GetShopProducts(string category = null)
+        {
+            return products.FindAll(p => p.isEnabled && !p.hideInShop &&
+                                         (string.IsNullOrEmpty(category) || p.category == category));
+        }
+
+        // ── Validation ─────────────────────────────────────────────────────────
+        private static readonly Regex GooglePlayId = new Regex("^[a-z0-9][a-z0-9_.]*$");
+        private static readonly Regex AppStoreId   = new Regex("^[A-Za-z0-9_.]+$");
+
+        /// <summary>Problems that would make products fail in the stores or in the shop.</summary>
+        public List<IAPIssue> Validate()
+        {
+            var issues     = new List<IAPIssue>();
+            var ids        = new HashSet<string>();
+            var androidIds = new HashSet<string>();
+            var iosIds     = new HashSet<string>();
+
+            for (var i = 0; i < products.Count; i++)
+            {
+                var p = products[i];
+                void Error(string message)   => issues.Add(new IAPIssue(i, IAPIssueSeverity.Error, message));
+                void Warning(string message) => issues.Add(new IAPIssue(i, IAPIssueSeverity.Warning, message));
+
+                if (string.IsNullOrWhiteSpace(p.id)) { Error("Product ID is empty."); continue; }
+                if (!ids.Add(p.id)) Error($"Product ID '{p.id}' is used by another product.");
+                if (!p.isEnabled) continue;
+
+                var androidId = p.GetAndroidId();
+                var iosId     = p.GetIOSId();
+                if (!GooglePlayId.IsMatch(androidId))
+                    Error($"Google Play ID '{androidId}' must start with a lowercase letter or number and use only a-z, 0-9, '_' and '.'.");
+                if (!AppStoreId.IsMatch(iosId))
+                    Error($"App Store ID '{iosId}' may only use letters, numbers, '_' and '.'.");
+                if (!androidIds.Add(androidId)) Error($"Google Play ID '{androidId}' is used by another product.");
+                if (!iosIds.Add(iosId))         Error($"App Store ID '{iosId}' is used by another product.");
+
+                if (p.id.StartsWith("com.company.", StringComparison.Ordinal))
+                    Warning("Product ID still uses the 'com.company' placeholder.");
+                if (string.IsNullOrWhiteSpace(p.displayName))
+                    Warning("Display name is empty; the shop shows nothing as the title.");
+
+                if (p.rewardType == RewardType.RemoveAds && p.productType == IAPProductType.Consumable)
+                    Error("Remove Ads must be Non-Consumable, or players lose it on reinstall and cannot restore it.");
+                if ((p.rewardType == RewardType.Currency || p.rewardType == RewardType.Item) && p.rewardAmount <= 0)
+                    Warning("Reward amount is 0, so the purchase grants nothing.");
+                if ((p.rewardType == RewardType.Currency || p.rewardType == RewardType.Item || p.rewardType == RewardType.Feature) &&
+                    string.IsNullOrWhiteSpace(p.rewardId))
+                    Warning("Reward ID is empty; your purchase handler cannot tell what to grant.");
+                if (p.rewardType == RewardType.Currency && p.productType != IAPProductType.Consumable)
+                    Warning("Currency packs are usually Consumable so players can buy them again.");
+            }
+            return issues;
+        }
+    }
+
+    public enum IAPIssueSeverity { Warning, Error }
+
+    /// <summary>One problem found by <see cref="IAPConfig.Validate"/>.</summary>
+    public readonly struct IAPIssue
+    {
+        public readonly int              ProductIndex;
+        public readonly IAPIssueSeverity Severity;
+        public readonly string           Message;
+
+        public IAPIssue(int productIndex, IAPIssueSeverity severity, string message)
+        {
+            ProductIndex = productIndex;
+            Severity     = severity;
+            Message      = message;
+        }
+
+        public override string ToString() => $"{Severity}: {Message}";
     }
 
     [Serializable]
@@ -51,9 +130,41 @@ namespace AdsIAPKit
         public bool   isFeatured = false;
         public bool   isEnabled  = true;
 
+        [Header("Shop")]
+        [Tooltip("Groups products into shop tabs, e.g. Coins or Bundles. A ShopCatalogView can show one category.")]
+        public string category = "";
+        [Tooltip("Corner ribbon text such as 20% MORE. Featured products without one show BEST VALUE.")]
+        public string badge = "";
+        [Tooltip("Small sticker on the card's top-left corner, e.g. HOT or NEW. Blank = none.")]
+        public string sticker = "";
+        [Tooltip("Show the display name as a header strip above the row, e.g. for bundles.")]
+        public bool showTitle = false;
+        [Tooltip("Extra icons shown after the amount as \"+ icon\", e.g. a no-ads icon on a bundle. Display only: your purchase handler grants them.")]
+        public List<Sprite> bonusIcons = new List<Sprite>();
+        [Tooltip("Optional card prefab with a ShopProductView, used for this product instead of the shop's Card Template. E.g. a big special-offer card.")]
+        public GameObject shopCard;
+        [Tooltip("Keep the product purchasable from code but leave it out of ShopCatalogView lists.")]
+        public bool hideInShop = false;
+
         // Runtime helpers
         public string GetAndroidId() => string.IsNullOrEmpty(androidId) ? id : androidId;
         public string GetIOSId()     => string.IsNullOrEmpty(iosId)     ? id : iosId;
+
+        /// <summary>Badge to show, or empty for none.</summary>
+        public string GetBadgeText() =>
+            !string.IsNullOrEmpty(badge) ? badge : isFeatured ? "BEST VALUE" : "";
+
+        /// <summary>Short reward line for a shop card, e.g. "500" coins or "No Ads".</summary>
+        public string GetRewardLabel()
+        {
+            switch (rewardType)
+            {
+                case RewardType.Currency:
+                case RewardType.Item:      return rewardAmount > 0 ? rewardAmount.ToString("N0") : "";
+                case RewardType.RemoveAds: return "No Ads";
+                default:                   return "";
+            }
+        }
     }
 
     public enum IAPProductType
@@ -71,4 +182,7 @@ namespace AdsIAPKit
         Feature,
         Custom
     }
+
+    /// <summary>Shows a dropdown of the catalog's product IDs for a string field in the Inspector.</summary>
+    public class IAPProductIdAttribute : PropertyAttribute { }
 }

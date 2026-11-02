@@ -110,9 +110,20 @@ namespace AdsIAPKit
                 PreloadAds();
             }));
         }
+        /// <summary>Opens Google's Ad Inspector to check mediation adapters and test ads on a device.</summary>
+        public void OpenAdInspector()
+        {
+            MobileAds.OpenAdInspector(error =>
+            {
+                if (error != null)
+                    AdsManager.RunOnMainThread(() =>
+                        Debug.LogWarning($"[AdsIAPKit] Ad Inspector failed: {error.GetMessage()}"));
+            });
+        }
 #else
         public bool IsPrivacyOptionsRequired => false;
         public void ShowPrivacyOptions(Action onClosed = null) => onClosed?.Invoke();
+        public void OpenAdInspector() => AdsIAPSettings.Log("Ad Inspector needs the Google Mobile Ads package.");
 #endif
 
         private void PreloadAds()

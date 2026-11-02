@@ -2,7 +2,9 @@
     "name": "AdsIAPKit.Editor",
     "rootNamespace": "AdsIAPKit.Editor",
     "references": [
-        "AdsIAPKit.Runtime"
+        "AdsIAPKit.Runtime",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
@@ -16,7 +18,10 @@
         { "name": "com.google.ads.mobile",      "expression": "1.0.0", "define": "ADMOB_ENABLED" },
         { "name": "com.unity.ads",              "expression": "4.0.0", "define": "UNITY_ADS_ENABLED" },
         { "name": "com.applovin.mediation.ads", "expression": "1.0.0", "define": "APPLOVIN_ENABLED" },
-        { "name": "com.unity.ads.ios-support",  "expression": "1.0.0", "define": "ATT_SUPPORT_ENABLED" }
+        { "name": "com.unity.ads.ios-support",  "expression": "1.0.0", "define": "ATT_SUPPORT_ENABLED" },
+        { "name": "com.unity.ugui",             "expression": "1.0.0", "define": "ADSIAPKIT_UGUI" },
+        { "name": "com.unity.ugui",             "expression": "2.0.0", "define": "ADSIAPKIT_TMP" },
+        { "name": "com.unity.textmeshpro",      "expression": "3.0.0", "define": "ADSIAPKIT_TMP" }
     ],
     "noEngineReferences": false
 }

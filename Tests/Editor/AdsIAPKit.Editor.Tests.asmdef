@@ -3,6 +3,7 @@
     "rootNamespace": "AdsIAPKit.Tests",
     "references": [
         "AdsIAPKit.Runtime",
+        "AdsIAPKit.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

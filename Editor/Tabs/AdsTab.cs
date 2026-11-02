@@ -15,6 +15,7 @@ namespace AdsIAPKit.Editor
         private bool _unityFold    = false;
         private bool _ironFold     = false;
         private bool _appLovinFold = false;
+        private bool _mediationFold = true;
 
         private Vector2 _scroll;
 
@@ -35,6 +36,8 @@ namespace AdsIAPKit.Editor
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
             DrawGeneralSettings();
+            DrawProviderSetup();
+            DrawPrivacySettings();
             DrawSeparator(2);
 
             DrawAdMobSection();
@@ -75,6 +78,110 @@ namespace AdsIAPKit.Editor
 
             if (_cfg.activeProvider == AdsProviderType.None)
                 EditorGUILayout.HelpBox("No active provider selected. Pick one above.", MessageType.Info);
+        }
+
+        // ── Packages & mediation for the active provider ───────────────────────
+        private void DrawProviderSetup()
+        {
+            var package = KitPackages.ForProvider(_cfg.activeProvider);
+            if (package == null) return;
+
+            GUILayout.Space(6);
+            KitPackageGUI.DrawPanel($"📦  Required for {package.DisplayName}", new[] { package });
+
+            GUILayout.Space(4);
+            _mediationFold = EditorGUILayout.Foldout(_mediationFold, "🔀  Mediation", true);
+            if (!_mediationFold) return;
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                switch (_cfg.activeProvider)
+                {
+                    case AdsProviderType.AdMob:
+                        DrawAdapterMediation(package,
+                            "Other networks compete for your AdMob ad requests. Install an adapter for each network, then add the " +
+                            "network to a mediation group in the AdMob console (Mediation → Create mediation group). " +
+                            "No code changes are needed.",
+                            "https://developers.google.com/admob/unity/mediate");
+                        break;
+
+                    case AdsProviderType.AppLovin:
+                        DrawAdapterMediation(package,
+                            "Install an adapter (Android + iOS) for each network, then turn the network on for your ad units " +
+                            "in the MAX dashboard. No code changes are needed.",
+                            "https://developers.applovin.com/en/max/unity/preparing-mediated-networks");
+                        if (KitPackageInstaller.IsInstalled(package.Id) &&
+                            GUILayout.Button("Open AppLovin Integration Manager", GUILayout.Height(22)))
+                            OpenMenuOrDocs(package.DocsUrl, "AppLovin/Integration Manager");
+                        break;
+
+                    case AdsProviderType.IronSource:
+                        GUILayout.Label("LevelPlay manages its own adapters. Open its Network Manager to install them, then " +
+                                        "turn the networks on in the LevelPlay dashboard.", EditorStyles.wordWrappedMiniLabel);
+                        if (GUILayout.Button("Open LevelPlay Network Manager", GUILayout.Height(22)))
+                            OpenMenuOrDocs(package.DocsUrl, "Ads Mediation/Network Manager", "LevelPlay/Network Manager",
+                                           "IronSource/Network Manager");
+                        break;
+
+                    case AdsProviderType.UnityAds:
+                        GUILayout.Label("Unity Ads is a single network. To mediate several networks, use AdMob, AppLovin MAX " +
+                                        "or LevelPlay as the active provider.", EditorStyles.wordWrappedMiniLabel);
+                        break;
+                }
+            }
+        }
+
+        private void DrawAdapterMediation(KitPackage sdk, string help, string docsUrl)
+        {
+            GUILayout.Label(help, EditorStyles.wordWrappedMiniLabel);
+            GUILayout.Space(4);
+
+            if (!KitPackageInstaller.IsInstalled(sdk.Id))
+            {
+                EditorGUILayout.HelpBox($"Install {sdk.DisplayName} first.", MessageType.Info);
+                return;
+            }
+
+            KitPackageGUI.DrawAdapters(KitPackages.AdaptersFor(_cfg.activeProvider),
+                                       KitPackages.AdapterRegistries(_cfg.activeProvider));
+            GUILayout.Space(4);
+            GUILayout.Label("Check which networks load on a device with AdsManager.Instance.OpenAdDebugger().",
+                EditorStyles.wordWrappedMiniLabel);
+            if (GUILayout.Button("Mediation Docs", GUILayout.Height(20)))
+                Application.OpenURL(docsUrl);
+        }
+
+        private static void OpenMenuOrDocs(string docsUrl, params string[] menuPaths)
+        {
+            foreach (var path in menuPaths)
+                if (MenuExists(path) && EditorApplication.ExecuteMenuItem(path)) return;
+            Application.OpenURL(docsUrl);
+        }
+
+        private static bool MenuExists(string path)
+        {
+            var root = path.Substring(0, path.IndexOf('/'));
+            return System.Array.Exists(Unsupported.GetSubmenus(root), m => m == path);
+        }
+
+        // ── Privacy ────────────────────────────────────────────────────────────
+        private void DrawPrivacySettings()
+        {
+            DrawSeparator(1);
+            GUILayout.Label("🔒  iOS App Tracking Transparency", SectionStyle());
+
+            EditorGUI.BeginChangeCheck();
+            _cfg.enableATT = EditorGUILayout.Toggle(
+                new GUIContent("Request ATT", "Ask for tracking permission on iOS before ads load"), _cfg.enableATT);
+            if (_cfg.enableATT)
+            {
+                EditorGUILayout.LabelField("Usage Description", EditorStyles.miniBoldLabel);
+                _cfg.attDescription = EditorGUILayout.TextArea(_cfg.attDescription, GUILayout.Height(36));
+            }
+            if (EditorGUI.EndChangeCheck()) MarkDirty();
+
+            if (_cfg.enableATT)
+                KitPackageGUI.DrawPanel("📦  Needed for the ATT prompt", new[] { KitPackages.IosSupport });
         }
 
         // ── AdMob ──────────────────────────────────────────────────────────────

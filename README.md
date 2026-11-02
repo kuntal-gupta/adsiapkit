@@ -3,9 +3,14 @@
 One API for mobile ads and in-app purchases in Unity. Pick an ad network in a setup window, call `AdsManager` and `IAPManager` from your game, and switch networks later without touching game code.
 
 - **Ads:** banner, interstitial and rewarded through AdMob, Unity Ads, IronSource or AppLovin MAX
-- **IAP:** Unity IAP 5 with a product catalog, restore, localized prices and purchases that are never lost
+- **Mediation:** install AdMob and AppLovin MAX adapters for 12 networks from the setup window
+- **IAP:** Unity IAP 5 with a product catalog editor (templates, store ID checks, CSV), restore, localized prices and purchases that are never lost
+- **Shop UI:** uGUI components that build a shop from the catalog, with prices, badges, owned state and restore
+- **One-click setup:** the setup window shows the SDKs your settings need and installs them, scoped registries included
 - **Privacy:** Google UMP consent (GDPR) and iOS App Tracking Transparency
 - **Safe by default:** test ad IDs in test mode, SDK callbacks moved to the main thread, and no free rewards or items in a build when an SDK is missing
+
+**New here? Follow the [Setup Guide](Documentation~/SetupGuide.md)**: SDKs, mediation, store products and the shop window, step by step.
 
 ## Requirements
 
@@ -20,20 +25,20 @@ One API for mobile ads and in-app purchases in Unity. Pick an ad network in a se
 **Package Manager → + → Add package from git URL…**
 
 ```
-https://github.com/kuntal-gupta/adsiapkit.git#v1.0.0
+https://github.com/kuntal-gupta/adsiapkit.git#v1.1.0
 ```
 
 Or add it to `Packages/manifest.json`:
 
 ```json
-"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.0.0"
+"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.1.0"
 ```
 
-The `#v1.0.0` tag pins a version. Use `#main` to follow the latest changes.
+The `#v1.1.0` tag pins a version. Use `#main` to follow the latest changes.
 
 ### 2. Install the SDKs you need
 
-The kit turns each integration on automatically when it finds the matching package:
+Pick an ad network and turn on IAP in the setup window: it lists the packages your settings need with an **Install** button for each, and adds the scoped registries (OpenUPM, AppLovin) to your manifest. The kit turns each integration on automatically when it finds the matching package:
 
 | Feature | Package | Enables |
 |---|---|---|
@@ -41,10 +46,12 @@ The kit turns each integration on automatically when it finds the matching packa
 | AdMob | `com.google.ads.mobile` (Google Mobile Ads, UPM/OpenUPM) | `ADMOB_ENABLED` |
 | Unity Ads | `com.unity.ads` 4.0+ | `UNITY_ADS_ENABLED` |
 | AppLovin MAX | `com.applovin.mediation.ads` | `APPLOVIN_ENABLED` |
-| IronSource | IronSource Unity plugin, then add `IRONSOURCE_ENABLED` to **Player Settings → Scripting Define Symbols** | `IRONSOURCE_ENABLED` |
+| IronSource | `com.unity.services.levelplay`, then **Enable IRONSOURCE_ENABLED** in the window (preview, legacy API) | `IRONSOURCE_ENABLED` |
 | iOS ATT prompt | `com.unity.ads.ios-support` | `ATT_SUPPORT_ENABLED` |
 
 > AdMob must be installed as a **UPM package**. The old `.unitypackage` import does not set `ADMOB_ENABLED`.
+
+**Mediation:** with AdMob or AppLovin MAX active, **Ads → Mediation** installs adapters for AppLovin, Unity Ads, IronSource, Meta, Liftoff, Mintegral, Pangle, InMobi, DT Exchange, Chartboost, Moloco and myTarget. Then add the networks in the network's dashboard; no code changes. See the [guide](Documentation~/SetupGuide.md#32-mediation).
 
 ### 3. Configure
 
@@ -125,6 +132,15 @@ public void OnBuyClicked(string productId)
 
 Use `IAPManager.Instance.GetLocalizedPrice(id)` for price labels and `RestorePurchases()` for a **Restore** button (required on iOS). `IsPurchased(id)` reports owned non-consumables.
 
+### Shop
+
+**IAP tab → Shop UI → Create Shop Catalog** (or **GameObject → AdsIAPKit → Shop Catalog**) builds a scrolling mobile-game shop on your Canvas: one row per enabled product, in catalog order, with the icon, amount, **+ bonus icons**, a corner ribbon badge, a HOT/NEW sticker, the store's localized price on the Buy button, an Owned state for non-consumables and a Restore button on iOS. Change the catalog and the shop follows.
+
+- `ShopCatalogView`: copies a card template per product; filter by **Category**, optionally featured first.
+- `ShopProductView`: one row (or any card layout you build). **Auto-Assign by Name** in its Inspector wires a custom card from child names. A product's **Card Override** gives it its own card prefab. Every field is optional and text accepts `Text` or TextMeshPro, so you can wire it to your own design. `onPurchased` and `onPurchaseFailed` UnityEvents for sounds and messages.
+
+Granting still happens in `PurchaseHandler`. See the [guide](Documentation~/SetupGuide.md#5-the-shop-window) for layouts, tabs and custom cards.
+
 ### Privacy (GDPR / UMP)
 
 With **GDPR Consent (UMP)** on, the kit asks Google whether consent is needed and shows Google's consent form before any ad is requested. Create the consent message in the AdMob console under **Privacy & messaging**.
@@ -151,6 +167,7 @@ With **ATT** on and `com.unity.ads.ios-support` installed, the kit requests trac
 | `IsInterstitialReady()`, `ShowInterstitial(Action onClosed)` | Interstitial |
 | `IsRewardedReady()`, `ShowRewarded(Action<bool> onResult)` | Rewarded; `true` means the user earned the reward |
 | `IsPrivacyOptionsRequired`, `ShowPrivacyOptions(Action onClosed)` | UMP privacy options (AdMob) |
+| `OpenAdDebugger()` | AdMob Ad Inspector or AppLovin Mediation Debugger, for test builds |
 
 Static events: `OnAdsInitialized`, `OnInterstitialClosed`, `OnRewardedResult(bool)`, `OnImpressionRevenue(double)`. Impression revenue is in the ad network's currency, in whole units (not micros).
 
@@ -159,11 +176,12 @@ Static events: `OnAdsInitialized`, `OnInterstitialClosed`, `OnRewardedResult(boo
 | Member | Description |
 |---|---|
 | `PurchaseHandler` (static) | `Func<string, bool>` that grants a product; required |
-| `Instance.Initialize(IAPConfig)` | Connects to the store and fetches products |
+| `Instance.Initialize(IAPConfig)`, `Instance.InitializeFromSettings()` | Connects to the store and fetches products |
 | `Instance.Purchase(id, Action<bool, string>)` | Starts a purchase |
 | `Instance.RestorePurchases()` | Restores purchases (iOS) |
 | `Instance.IsPurchased(id)` | Owned non-consumables |
 | `Instance.GetLocalizedPrice(id)` | Store price string |
+| `Instance.IsAvailable(id)`, `Instance.IsPurchaseInProgress(id)` | Store state for your own UI |
 
 Static events: `OnIAPInitialized`, `OnPurchaseSuccess(id)`, `OnPurchaseFailure(id, message)`, `OnRestoreSuccess`, `OnRestoreFailed`.
 
@@ -203,6 +221,7 @@ Static events: `OnIAPInitialized`, `OnPurchaseSuccess(id)`, `OnPurchaseFailure(i
 
 - Rewarded interstitial and MREC settings exist in the config but are not wired up yet.
 - Server-side receipt validation is not implemented.
+- Subscription expiry is not tracked; `IsPurchased` only reports non-consumables reliably, and shop cards never show subscriptions as owned.
 
 ## License
 

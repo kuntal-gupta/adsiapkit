@@ -1,10 +1,10 @@
 {
   "name": "com.puzzlecraftgames.adsiapkit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Ads & IAP Kit",
-  "description": "One API for mobile ads and in-app purchases. Switch between AdMob, Unity Ads, IronSource and AppLovin MAX from a setup window, with Unity IAP 5, Google UMP consent and iOS App Tracking Transparency built in.\n\nAd and IAP SDKs are optional: install only the ones you use.",
+  "description": "One API for mobile ads and in-app purchases. Switch between AdMob, Unity Ads, IronSource and AppLovin MAX from a setup window that installs the SDKs and mediation adapters for you, with Unity IAP 5, a product catalog editor, a ready-made shop UI, Google UMP consent and iOS App Tracking Transparency built in.\n\nAd and IAP SDKs are optional: install only the ones you use.",
   "unity": "2022.3",
-  "documentationUrl": "https://github.com/kuntal-gupta/adsiapkit/blob/main/README.md",
+  "documentationUrl": "https://github.com/kuntal-gupta/adsiapkit/blob/main/Documentation~/SetupGuide.md",
   "changelogUrl": "https://github.com/kuntal-gupta/adsiapkit/blob/main/CHANGELOG.md",
   "licensesUrl": "https://github.com/kuntal-gupta/adsiapkit/blob/main/LICENSE.md",
   "repository": {
@@ -29,7 +29,9 @@
     "gdpr",
     "ump",
     "att",
-    "monetization"
+    "monetization",
+    "mediation",
+    "shop"
   ],
   "category": "Monetization",
   "samples": [

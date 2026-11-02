@@ -50,6 +50,16 @@ namespace AdsIAPKit
             if (_settings.rewardedEnabled)     LoadRewarded();
         }
 
+        /// <summary>Opens the MAX Mediation Debugger to check adapters and test ads on a device.</summary>
+        public void ShowMediationDebugger()
+        {
+#if APPLOVIN_ENABLED
+            MaxSdk.ShowMediationDebugger();
+#else
+            AdsIAPSettings.Log("Mediation Debugger needs the AppLovin MAX package.");
+#endif
+        }
+
         // ── Banner ─────────────────────────────────────────────────────────────
         public void ShowBanner()
         {

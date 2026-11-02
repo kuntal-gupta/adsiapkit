@@ -32,7 +32,7 @@ namespace AdsIAPKit.Editor
             GUILayout.Space(6);
 
             var infoStyle = new GUIStyle(EditorStyles.label) { wordWrap = true };
-            GUILayout.Label("AdsIAPKit v1.0.0 — Unified Ads & IAP manager for Unity.", infoStyle);
+            GUILayout.Label("AdsIAPKit v1.1.0 — Unified Ads & IAP manager for Unity.", infoStyle);
             GUILayout.Label("Supports AdMob · Unity Ads · IronSource · AppLovin MAX · Unity IAP.", infoStyle);
             GUILayout.Space(6);
 

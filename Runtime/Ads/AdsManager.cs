@@ -273,6 +273,21 @@ namespace AdsIAPKit
             else onClosed?.Invoke();
         }
 
+        // ── Debugging ──────────────────────────────────────────────────────────
+        /// <summary>
+        /// Opens the network's mediation debugger on a device: the Ad Inspector for AdMob or the
+        /// Mediation Debugger for AppLovin MAX. Use it in test builds to check that adapters load.
+        /// </summary>
+        public void OpenAdDebugger()
+        {
+            switch (_provider)
+            {
+                case AdMobProvider adMob:       adMob.OpenAdInspector(); break;
+                case AppLovinProvider appLovin: appLovin.ShowMediationDebugger(); break;
+                default: AdsIAPSettings.Log($"{ProviderName} has no ad debugger."); break;
+            }
+        }
+
         private bool CheckReady(string caller)
         {
             if (_provider == null || !_provider.IsInitialized)

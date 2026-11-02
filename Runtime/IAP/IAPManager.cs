@@ -27,6 +27,7 @@ namespace AdsIAPKit
         }
 
         public bool IsInitialized { get; private set; }
+        public bool IsInitializing => _isInitializing;
         public static event Action OnIAPInitialized;
         public static event Action<string> OnPurchaseSuccess;
         public static event Action<string, string> OnPurchaseFailure;
@@ -62,6 +63,14 @@ namespace AdsIAPKit
             if (_instance != null && _instance != this) { Destroy(gameObject); return; }
             _instance = this;
             DontDestroyOnLoad(gameObject);
+        }
+
+        /// <summary>Initializes with the catalog in AdsIAPSettings. Safe to call more than once.</summary>
+        public void InitializeFromSettings()
+        {
+            var settings = AdsIAPSettings.Instance;
+            if (settings != null && settings.iapConfig != null) Initialize(settings.iapConfig);
+            else Debug.LogWarning("[AdsIAPKit] No IAP Config in AdsIAPSettings. Open Window > AdsIAPKit > Setup Window.");
         }
 
         public void Initialize(IAPConfig config)
@@ -269,6 +278,21 @@ namespace AdsIAPKit
             AdsIAPSettings.Log("Restore only needed on iOS.");
 #endif
         }
+
+        /// <summary>True when the store returned the product and it can be bought now.</summary>
+        public bool IsAvailable(string productId)
+        {
+            if (!IsInitialized) return false;
+#if UNITY_IAP_ENABLED
+            var product = _controller.GetProductById(productId);
+            return product != null && product.availableToPurchase;
+#else
+            return _config?.GetProduct(productId) != null;
+#endif
+        }
+
+        /// <summary>True while a purchase started with a callback is waiting for the store.</summary>
+        public bool IsPurchaseInProgress(string productId) => _pendingPurchases.ContainsKey(productId);
 
         public bool IsPurchased(string productId)
         {

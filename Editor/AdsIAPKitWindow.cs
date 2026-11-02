@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -30,13 +31,14 @@ namespace AdsIAPKit.Editor
         private const string AdsConfigPath   = "Assets/Resources/AdsIAPKit/AdsConfig.asset";
         private const string IAPConfigPath   = "Assets/Resources/AdsIAPKit/IAPConfig.asset";
 
+        internal const string GuideUrl = "https://github.com/kuntal-gupta/adsiapkit/blob/main/Documentation~/SetupGuide.md";
+
         // ── State ──────────────────────────────────────────────────────────────
         private AdsIAPSettings _settings;
         private int            _tabIndex;
         private BaseTab[]      _tabs;
         private GUIStyle       _tabButtonStyle;
         private bool           _stylesInit;
-        private bool           _missingSdkPromptShown;
 
         private readonly string[] _tabLabels = { "📺  Ads", "💳  IAP", "⚙️  Settings" };
 
@@ -53,6 +55,12 @@ namespace AdsIAPKit.Editor
             _settings = LoadOrCreateSettings();
             foreach (var tab in _tabs)
                 tab.OnEnable(_settings);
+        }
+
+        // Keeps the install progress and package status current while the window is open.
+        private void OnInspectorUpdate()
+        {
+            if (KitPackageInstaller.IsBusy) Repaint();
         }
 
         private void OnFocus()
@@ -97,31 +105,30 @@ namespace AdsIAPKit.Editor
             }
         }
 
+        // Summary of the packages the current settings need; each tab has the full list.
         private void DrawSDKStatus()
         {
             var result = AdsIAPKitSdkChecker.Check(_settings);
             if (result.IsReady)
             {
-                EditorGUILayout.HelpBox("Required AdsIAPKit SDKs detected.", MessageType.Info);
+                if (result.Installed.Count > 0)
+                    EditorGUILayout.HelpBox("All required packages are installed.", MessageType.Info);
                 return;
             }
 
-            EditorGUILayout.HelpBox(
-                "SDK setup required:\n• " + string.Join("\n• ", result.Missing),
-                MessageType.Warning);
+            var names = new List<string>();
+            foreach (var package in result.Missing) names.Add(package.DisplayName);
+            EditorGUILayout.HelpBox("Your settings need packages that are not installed or enabled:\n• " +
+                                    string.Join("\n• ", names), MessageType.Warning);
 
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Setup Missing SDKs", GUILayout.Height(26)))
-                AdsIAPKitSdkChecker.ShowSetupPrompt(result);
-            if (GUILayout.Button("Refresh Check", GUILayout.Width(110), GUILayout.Height(26)))
-                Repaint();
-            EditorGUILayout.EndHorizontal();
-
-            if (!_missingSdkPromptShown)
+            var installable = result.Missing.FindAll(p => !KitPackageInstaller.IsInstalled(p.Id));
+            if (installable.Count > 0)
             {
-                _missingSdkPromptShown = true;
-                AdsIAPKitSdkChecker.ShowSetupPrompt(result);
+                using (new EditorGUI.DisabledScope(KitPackageInstaller.IsBusy))
+                    if (GUILayout.Button("Install Missing Packages", GUILayout.Height(26)))
+                        KitPackageInstaller.Install(installable);
             }
+            KitPackageGUI.DrawBusy();
         }
 
         // ── Top Bar ────────────────────────────────────────────────────────────
@@ -177,6 +184,10 @@ namespace AdsIAPKit.Editor
                 GUILayout.Label($"Ads: {providerName}  |  IAP: {(hasIAP ? "ON" : "OFF")}",
                     pillStyle, GUILayout.Height(48));
             }
+
+            GUILayout.Space(8);
+            if (GUILayout.Button("📖 Guide", GUILayout.Width(70), GUILayout.Height(22)))
+                Application.OpenURL(GuideUrl);
 
             GUILayout.Space(12);
             EditorGUILayout.EndHorizontal();
