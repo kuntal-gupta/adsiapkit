@@ -18,7 +18,7 @@ This guide takes a project from an empty install to a shipped game with ads, med
 **Package Manager → + → Add package from git URL…**
 
 ```
-https://github.com/kuntal-gupta/adsiapkit.git#v1.3.2
+https://github.com/kuntal-gupta/adsiapkit.git#v1.3.3
 ```
 
 Then open **Tools → AdsIAPKit → Setup Window**. The first time, it creates three assets in `Assets/Resources/AdsIAPKit/`:

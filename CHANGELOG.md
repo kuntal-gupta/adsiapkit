@@ -3,6 +3,11 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.3.3] - 2026-11-06
+
+### Added
+- **Auto-Approve Test Purchases** toggle in the IAP tab. It sets `IAP_FAKE_STORE_DEFAULT` (Android, iOS, Standalone) so Unity IAP's Editor fake store approves purchases without its Buy/Cancel dialog, which cannot be clicked in the Device Simulator. Device builds are unaffected.
+
 ## [1.3.2] - 2026-11-06
 
 ### Fixed

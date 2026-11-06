@@ -99,6 +99,30 @@ namespace AdsIAPKit.Editor
 
             GUILayout.Space(4);
             KitPackageGUI.DrawPanel("📦  Required for in-app purchases", new[] { KitPackages.UnityIap });
+
+            DrawTestPurchases();
+        }
+
+        private static void DrawTestPurchases()
+        {
+            GUILayout.Space(4);
+            var autoApprove = IAPTestPurchases.AutoApprove;
+            EditorGUI.BeginChangeCheck();
+            autoApprove = EditorGUILayout.Toggle(new GUIContent("Auto-Approve Test Purchases",
+                "Editor only. Unity IAP's fake store approves every purchase without its Buy/Cancel dialog. " +
+                "Use it when that dialog cannot be clicked, e.g. in the Device Simulator. Sets the " +
+                IAPTestPurchases.Define + " define; device builds use the real store either way."), autoApprove);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (EditorApplication.isPlaying)
+                    EditorUtility.DisplayDialog("Auto-Approve Test Purchases", "Stop Play mode first; changing this recompiles scripts.", "OK");
+                else
+                    IAPTestPurchases.AutoApprove = autoApprove;
+            }
+            GUILayout.Label(autoApprove
+                    ? "Editor purchases succeed at once. Turn this off to test Cancel in the fake store dialog."
+                    : "Editor purchases show the fake store's Buy/Cancel dialog (not clickable in the Device Simulator).",
+                EditorStyles.wordWrappedMiniLabel);
         }
 
         // ── Validation ─────────────────────────────────────────────────────────
