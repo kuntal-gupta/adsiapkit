@@ -290,6 +290,7 @@ namespace AdsIAPKit.Editor
                     p.rewardId     = EditorGUILayout.TextField(new GUIContent(p.rewardType == RewardType.Currency ? "Currency ID" : "Item ID",
                         "e.g. coins, gems, hint"), p.rewardId);
                     p.rewardAmount = EditorGUILayout.IntField("Amount", p.rewardAmount);
+                    DrawBonusAmount(p);
                     p.alsoRemovesAds = EditorGUILayout.Toggle(new GUIContent("Also Removes Ads", AlsoRemovesAdsHelp), p.alsoRemovesAds);
                     break;
                 case RewardType.Feature:
@@ -303,6 +304,7 @@ namespace AdsIAPKit.Editor
                 case RewardType.Custom:
                     p.rewardId     = EditorGUILayout.TextField(new GUIContent("Reward ID", "Any key your handler understands"), p.rewardId);
                     p.rewardAmount = EditorGUILayout.IntField("Amount", p.rewardAmount);
+                    DrawBonusAmount(p);
                     p.alsoRemovesAds = EditorGUILayout.Toggle(new GUIContent("Also Removes Ads", AlsoRemovesAdsHelp), p.alsoRemovesAds);
                     break;
             }
@@ -350,6 +352,14 @@ namespace AdsIAPKit.Editor
                     break;
                 }
             }
+        }
+
+        private static void DrawBonusAmount(IAPProduct p)
+        {
+            p.bonusAmount = Mathf.Max(0, EditorGUILayout.IntField(new GUIContent("Bonus Amount",
+                "Granted on top of Amount, e.g. a +500 promotion. Your handler grants GetTotalAmount(). 0 = none."), p.bonusAmount));
+            if (p.bonusAmount > 0)
+                EditorGUILayout.LabelField(" ", $"Grants {p.GetTotalAmount():N0} in total", EditorStyles.miniLabel);
         }
 
         private const string AlsoRemovesAdsHelp =
@@ -546,7 +556,7 @@ namespace AdsIAPKit.Editor
         private static readonly string[] CsvColumns =
         {
             "ID", "DisplayName", "Description", "Type", "GooglePlayID", "AppStoreID", "FallbackPrice",
-            "RewardType", "RewardID", "RewardAmount", "AlsoRemovesAds", "Category", "Badge", "Sticker", "ShowTitle", "Featured", "Enabled", "HideInShop"
+            "RewardType", "RewardID", "RewardAmount", "BonusAmount", "AlsoRemovesAds", "Category", "Badge", "Sticker", "ShowTitle", "Featured", "Enabled", "HideInShop"
         };
 
         private void ExportCSV()
@@ -563,7 +573,7 @@ namespace AdsIAPKit.Editor
                 var fields = new[]
                 {
                     p.id, p.displayName, p.description, p.productType.ToString(), p.androidId, p.iosId, p.displayPrice,
-                    p.rewardType.ToString(), p.rewardId, p.rewardAmount.ToString(), p.alsoRemovesAds.ToString(), p.category, p.badge,
+                    p.rewardType.ToString(), p.rewardId, p.rewardAmount.ToString(), p.bonusAmount.ToString(), p.alsoRemovesAds.ToString(), p.category, p.badge,
                     p.sticker, p.showTitle.ToString(), p.isFeatured.ToString(), p.isEnabled.ToString(), p.hideInShop.ToString()
                 };
                 sb.AppendLine(string.Join(",", fields.Select(CsvEscape)));
@@ -610,6 +620,7 @@ namespace AdsIAPKit.Editor
                 if (Enum.TryParse(Get("Type"), true, out IAPProductType type)) p.productType = type;
                 if (Enum.TryParse(Get("RewardType"), true, out RewardType reward)) p.rewardType = reward;
                 if (int.TryParse(Get("RewardAmount"), out var amount)) p.rewardAmount = amount;
+                if (int.TryParse(Get("BonusAmount"), out var bonus)) p.bonusAmount = Math.Max(0, bonus);
                 if (bool.TryParse(Get("ShowTitle"), out var showTitle)) p.showTitle = showTitle;
                 if (bool.TryParse(Get("Featured"), out var featured)) p.isFeatured = featured;
                 if (bool.TryParse(Get("Enabled"), out var enabled)) p.isEnabled = enabled;

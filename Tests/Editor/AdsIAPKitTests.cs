@@ -126,6 +126,25 @@ namespace AdsIAPKit.Tests
         }
 
         [Test]
+        public void BonusAmount_AddsToTotalAndLabel()
+        {
+            var pack = Coins("game.coins_bonus");
+            Assert.AreEqual(100, pack.GetTotalAmount());
+            pack.bonusAmount = 50;
+            Assert.AreEqual(150, pack.GetTotalAmount());
+            StringAssert.Contains("+", pack.GetRewardLabel());
+        }
+
+        [Test]
+        public void NegativeBonusAmount_IsError()
+        {
+            var pack = Coins("game.coins_bonus");
+            pack.bonusAmount = -5;
+            _config.products.Add(pack);
+            Assert.IsTrue(HasError("Bonus amount cannot be negative"));
+        }
+
+        [Test]
         public void DisabledProduct_SkipsStoreChecks()
         {
             var product = Coins("Bad ID");

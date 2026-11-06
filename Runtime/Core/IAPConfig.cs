@@ -72,6 +72,10 @@ namespace AdsIAPKit
                     Error("Remove Ads must be Non-Consumable, or players lose it on reinstall and cannot restore it.");
                 if ((p.rewardType == RewardType.Currency || p.rewardType == RewardType.Item) && p.rewardAmount <= 0)
                     Warning("Reward amount is 0, so the purchase grants nothing.");
+                if (p.bonusAmount < 0)
+                    Error("Bonus amount cannot be negative.");
+                else if (p.bonusAmount > 0 && (p.rewardType == RewardType.RemoveAds || p.rewardType == RewardType.Feature))
+                    Warning("Bonus amount is ignored for this reward type; it only adds to Currency, Item or Custom amounts.");
                 if ((p.rewardType == RewardType.Currency || p.rewardType == RewardType.Item || p.rewardType == RewardType.Feature) &&
                     string.IsNullOrWhiteSpace(p.rewardId))
                     Warning("Reward ID is empty; your purchase handler cannot tell what to grant.");
@@ -128,6 +132,8 @@ namespace AdsIAPKit
         public RewardType rewardType   = RewardType.Currency;
         public string     rewardId     = "coins";
         public int        rewardAmount = 100;
+        [Tooltip("Extra amount granted on top of Reward Amount, e.g. a +500 coins promotion. Shown as \"1,000 + 500\". 0 = none.")]
+        public int        bonusAmount  = 0;
         [Tooltip("Also removes ads, e.g. a big coin pack with No Ads. Your purchase handler grants it: check RemovesAds().")]
         public bool       alsoRemovesAds = false;
 
@@ -156,6 +162,9 @@ namespace AdsIAPKit
         public string GetAndroidId() => string.IsNullOrEmpty(androidId) ? id : androidId;
         public string GetIOSId()     => string.IsNullOrEmpty(iosId)     ? id : iosId;
 
+        /// <summary>What the purchase grants: Reward Amount plus Bonus Amount.</summary>
+        public int GetTotalAmount() => rewardAmount + Math.Max(0, bonusAmount);
+
         /// <summary>True when buying this product should turn ads off: Remove Ads itself, or a bundle that includes it.</summary>
         public bool RemovesAds() => rewardType == RewardType.RemoveAds || alsoRemovesAds;
 
@@ -169,7 +178,9 @@ namespace AdsIAPKit
             switch (rewardType)
             {
                 case RewardType.Currency:
-                case RewardType.Item:      return rewardAmount > 0 ? rewardAmount.ToString("N0") : "";
+                case RewardType.Item:
+                    if (rewardAmount <= 0) return "";
+                    return bonusAmount > 0 ? $"{rewardAmount:N0} + {bonusAmount:N0}" : rewardAmount.ToString("N0");
                 case RewardType.RemoveAds: return "No Ads";
                 default:                   return "";
             }

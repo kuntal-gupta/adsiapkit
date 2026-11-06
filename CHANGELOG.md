@@ -3,6 +3,14 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-11-06
+
+### Added
+- Product **Bonus Amount** (`IAPProduct.bonusAmount`): extra currency or items on top of the amount, e.g. a +500 coins promotion, set in the catalog editor and CSV (`BonusAmount` column).
+- `IAPProduct.GetTotalAmount()`: amount plus bonus, for purchase handlers.
+- `GetRewardLabel()` shows the bonus, e.g. "1,000 + 500".
+- Catalog check: a negative bonus is an error; a bonus on Remove Ads or Feature products is a warning.
+
 ## [1.2.0] - 2026-11-06
 
 ### Added
