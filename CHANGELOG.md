@@ -3,6 +3,15 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] - 2026-11-06
+
+### Changed
+- The setup window menu moved from **Window → AdsIAPKit** to **Tools → AdsIAPKit** (Setup Window, Quick Select Settings).
+- Catalog check: No Ads on a Consumable pack is now an info note instead of a warning when the catalog also sells a Non-Consumable Remove Ads, since players can get No Ads back that way.
+
+### Added
+- `IAPIssueSeverity.Info` for notes that need no fix. The catalog editor shows them as info and counts them separately.
+
 ## [1.3.0] - 2026-11-06
 
 ### Added

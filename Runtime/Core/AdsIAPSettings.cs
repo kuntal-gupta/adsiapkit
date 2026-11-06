@@ -29,7 +29,7 @@ namespace AdsIAPKit
 
                 if (_instance == null)
                     Debug.LogWarning("[AdsIAPKit] AdsIAPSettings not found in Resources. " +
-                                     "Open Window > AdsIAPKit to generate it.");
+                                     "Open Tools > AdsIAPKit to generate it.");
                 return _instance;
             }
         }

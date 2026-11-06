@@ -126,6 +126,21 @@ namespace AdsIAPKit.Tests
         }
 
         [Test]
+        public void ConsumableBundleWithNoAds_IsInfoWhenRemoveAdsIsSold()
+        {
+            var pack = Coins("game.coins_big");
+            pack.alsoRemovesAds = true;
+            var removeAds = Coins("game.remove_ads");
+            removeAds.rewardType  = RewardType.RemoveAds;
+            removeAds.productType = IAPProductType.NonConsumable;
+            _config.products.Add(pack);
+            _config.products.Add(removeAds);
+            var issues = _config.Validate();
+            Assert.IsTrue(issues.Exists(i => i.Severity == IAPIssueSeverity.Info && i.Message.Contains("lost on reinstall")));
+            Assert.IsFalse(issues.Exists(i => i.Severity == IAPIssueSeverity.Warning && i.Message.Contains("reinstall")));
+        }
+
+        [Test]
         public void BonusAmount_AddsToTotalAndLabel()
         {
             var pack = Coins("game.coins_bonus");

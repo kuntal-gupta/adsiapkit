@@ -70,7 +70,7 @@ namespace AdsIAPKit
         {
             var settings = AdsIAPSettings.Instance;
             if (settings != null && settings.iapConfig != null) Initialize(settings.iapConfig);
-            else Debug.LogWarning("[AdsIAPKit] No IAP Config in AdsIAPSettings. Open Window > AdsIAPKit > Setup Window.");
+            else Debug.LogWarning("[AdsIAPKit] No IAP Config in AdsIAPSettings. Open Tools > AdsIAPKit > Setup Window.");
         }
 
         public void Initialize(IAPConfig config)

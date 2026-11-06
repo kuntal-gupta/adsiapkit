@@ -44,11 +44,16 @@ namespace AdsIAPKit
             var androidIds = new HashSet<string>();
             var iosIds     = new HashSet<string>();
 
+            // A restorable Remove Ads lets players get No Ads back after a reinstall.
+            var sellsRestorableRemoveAds = products.Exists(x => x != null && x.isEnabled &&
+                x.rewardType == RewardType.RemoveAds && x.productType == IAPProductType.NonConsumable);
+
             for (var i = 0; i < products.Count; i++)
             {
                 var p = products[i];
                 void Error(string message)   => issues.Add(new IAPIssue(i, IAPIssueSeverity.Error, message));
                 void Warning(string message) => issues.Add(new IAPIssue(i, IAPIssueSeverity.Warning, message));
+                void Info(string message)    => issues.Add(new IAPIssue(i, IAPIssueSeverity.Info, message));
 
                 if (string.IsNullOrWhiteSpace(p.id)) { Error("Product ID is empty."); continue; }
                 if (!ids.Add(p.id)) Error($"Product ID '{p.id}' is used by another product.");
@@ -82,7 +87,12 @@ namespace AdsIAPKit
                 if (p.alsoRemovesAds && p.rewardType == RewardType.RemoveAds)
                     Warning("Also Removes Ads is redundant on a Remove Ads product.");
                 else if (p.alsoRemovesAds && p.productType == IAPProductType.Consumable)
-                    Warning("No Ads from a Consumable is not restored after a reinstall. Also sell a Non-Consumable Remove Ads so players can restore it.");
+                {
+                    if (sellsRestorableRemoveAds)
+                        Info("No Ads from this Consumable pack is lost on reinstall; players get it back with the Non-Consumable Remove Ads product.");
+                    else
+                        Warning("No Ads from a Consumable is not restored after a reinstall. Also sell a Non-Consumable Remove Ads so players can restore it.");
+                }
                 if (p.rewardType == RewardType.Currency && p.productType != IAPProductType.Consumable)
                     Warning("Currency packs are usually Consumable so players can buy them again.");
             }
@@ -90,7 +100,8 @@ namespace AdsIAPKit
         }
     }
 
-    public enum IAPIssueSeverity { Warning, Error }
+    /// <summary>Error: breaks purchases. Warning: likely a mistake. Info: worth knowing, nothing to fix.</summary>
+    public enum IAPIssueSeverity { Warning, Error, Info }
 
     /// <summary>One problem found by <see cref="IAPConfig.Validate"/>.</summary>
     public readonly struct IAPIssue

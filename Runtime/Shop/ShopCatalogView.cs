@@ -8,7 +8,7 @@ namespace AdsIAPKit
 {
     /// <summary>
     /// Fills a shop from the IAP catalog: one copy of the card template per product, in catalog order.
-    /// Add products in Window > AdsIAPKit > IAP and they appear here without code.
+    /// Add products in Tools > AdsIAPKit > IAP and they appear here without code.
     /// </summary>
     [AddComponentMenu("AdsIAPKit/Shop Catalog View")]
     public class ShopCatalogView : MonoBehaviour

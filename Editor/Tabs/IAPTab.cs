@@ -105,7 +105,8 @@ namespace AdsIAPKit.Editor
         private void DrawValidationSummary()
         {
             var errors   = _issues.Count(i => i.Severity == IAPIssueSeverity.Error);
-            var warnings = _issues.Count - errors;
+            var warnings = _issues.Count(i => i.Severity == IAPIssueSeverity.Warning);
+            var notes    = _issues.Count - errors - warnings;
             if (_issues.Count == 0)
             {
                 if (_cfg.products.Count > 0)
@@ -117,7 +118,9 @@ namespace AdsIAPKit.Editor
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 _issuesFold = EditorGUILayout.Foldout(_issuesFold,
-                    $"Catalog check: {errors} error(s), {warnings} warning(s)", true);
+                    notes > 0
+                        ? $"Catalog check: {errors} error(s), {warnings} warning(s), {notes} note(s)"
+                        : $"Catalog check: {errors} error(s), {warnings} warning(s)", true);
                 if (!_issuesFold) return;
 
                 foreach (var issue in _issues)
@@ -126,8 +129,7 @@ namespace AdsIAPKit.Editor
                     {
                         var product = _cfg.products[issue.ProductIndex];
                         var name = string.IsNullOrEmpty(product.displayName) ? product.id : product.displayName;
-                        EditorGUILayout.HelpBox($"{name}: {issue.Message}",
-                            issue.Severity == IAPIssueSeverity.Error ? MessageType.Error : MessageType.Warning);
+                        EditorGUILayout.HelpBox($"{name}: {issue.Message}", ToMessageType(issue.Severity));
                         if (GUILayout.Button("Show", GUILayout.Width(46), GUILayout.Height(38)))
                         {
                             _search = "";
@@ -183,6 +185,10 @@ namespace AdsIAPKit.Editor
                    Contains(p.GetAndroidId(), term) || Contains(p.GetIOSId(), term);
         }
 
+        private static MessageType ToMessageType(IAPIssueSeverity severity) =>
+            severity == IAPIssueSeverity.Error   ? MessageType.Error :
+            severity == IAPIssueSeverity.Warning ? MessageType.Warning : MessageType.Info;
+
         private static bool Contains(string text, string term) =>
             !string.IsNullOrEmpty(text) && text.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0;
 
@@ -191,6 +197,7 @@ namespace AdsIAPKit.Editor
             var p = _cfg.products[index];
             var productIssues = _issues.Where(i => i.ProductIndex == index).ToList();
             var hasError = productIssues.Any(i => i.Severity == IAPIssueSeverity.Error);
+            var hasWarning = productIssues.Any(i => i.Severity == IAPIssueSeverity.Warning);
 
             var cardColor = EditorGUIUtility.isProSkin ? new Color(0.22f, 0.22f, 0.22f) : new Color(0.88f, 0.88f, 0.88f);
             var rect = EditorGUILayout.BeginVertical();
@@ -202,7 +209,7 @@ namespace AdsIAPKit.Editor
             _folds[index] = EditorGUILayout.Foldout(_folds[index], "", true);
             var foldRect = GUILayoutUtility.GetLastRect();
             var title = string.IsNullOrEmpty(p.displayName) ? p.id : p.displayName;
-            if (productIssues.Count > 0) title = (hasError ? "⛔ " : "⚠ ") + title;
+            if (hasError || hasWarning) title = (hasError ? "⛔ " : "⚠ ") + title;
             GUI.Label(new Rect(foldRect.x + 14, foldRect.y, 220, foldRect.height), title,
                 new GUIStyle(EditorStyles.boldLabel) { fontSize = 12 });
             GUILayout.FlexibleSpace();
@@ -246,8 +253,7 @@ namespace AdsIAPKit.Editor
             EditorGUI.BeginChangeCheck();
 
             foreach (var issue in productIssues)
-                EditorGUILayout.HelpBox(issue.Message,
-                    issue.Severity == IAPIssueSeverity.Error ? MessageType.Error : MessageType.Warning);
+                EditorGUILayout.HelpBox(issue.Message, ToMessageType(issue.Severity));
 
             // Identity
             GUILayout.Space(4);

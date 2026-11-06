@@ -6,12 +6,12 @@ using UnityEngine;
 namespace AdsIAPKit.Editor
 {
     /// <summary>
-    /// Main editor window.  Open via Window > AdsIAPKit > Setup Window.
+    /// Main editor window.  Open via Tools > AdsIAPKit > Setup Window.
     /// </summary>
     public class AdsIAPKitWindow : EditorWindow
     {
         // ── Menu ───────────────────────────────────────────────────────────────
-        [MenuItem("Window/AdsIAPKit/Setup Window", priority = 1)]
+        [MenuItem("Tools/AdsIAPKit/Setup Window", priority = 1)]
         public static void Open()
         {
             var win = GetWindow<AdsIAPKitWindow>("AdsIAPKit");
@@ -19,7 +19,7 @@ namespace AdsIAPKit.Editor
             win.Show();
         }
 
-        [MenuItem("Window/AdsIAPKit/Quick Select Settings", priority = 2)]
+        [MenuItem("Tools/AdsIAPKit/Quick Select Settings", priority = 2)]
         public static void SelectSettings()
         {
             var s = LoadOrCreateSettings();

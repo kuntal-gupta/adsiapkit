@@ -5,7 +5,7 @@ namespace AdsIAPKit.Samples
 {
     /// <summary>
     /// Minimal integration: add this to an empty GameObject and press Play.
-    /// Configure the kit first in Window > AdsIAPKit > Setup Window.
+    /// Configure the kit first in Tools > AdsIAPKit > Setup Window.
     /// </summary>
     public class AdsIAPKitDemo : MonoBehaviour
     {

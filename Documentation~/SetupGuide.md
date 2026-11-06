@@ -1,6 +1,6 @@
 # Ads & IAP Kit: Setup Guide
 
-This guide takes a project from an empty install to a shipped game with ads, mediation, in-app purchases and a working shop. Each step happens in the setup window (**Window → AdsIAPKit → Setup Window**) unless it says otherwise.
+This guide takes a project from an empty install to a shipped game with ads, mediation, in-app purchases and a working shop. Each step happens in the setup window (**Tools → AdsIAPKit → Setup Window**) unless it says otherwise.
 
 1. [Install the kit](#1-install-the-kit)
 2. [The setup window](#2-the-setup-window)
@@ -18,10 +18,10 @@ This guide takes a project from an empty install to a shipped game with ads, med
 **Package Manager → + → Add package from git URL…**
 
 ```
-https://github.com/kuntal-gupta/adsiapkit.git#v1.3.0
+https://github.com/kuntal-gupta/adsiapkit.git#v1.3.1
 ```
 
-Then open **Window → AdsIAPKit → Setup Window**. The first time, it creates three assets in `Assets/Resources/AdsIAPKit/`:
+Then open **Tools → AdsIAPKit → Setup Window**. The first time, it creates three assets in `Assets/Resources/AdsIAPKit/`:
 
 | Asset | Holds |
 |---|---|

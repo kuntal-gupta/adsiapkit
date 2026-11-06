@@ -25,16 +25,16 @@ One API for mobile ads and in-app purchases in Unity. Pick an ad network in a se
 **Package Manager → + → Add package from git URL…**
 
 ```
-https://github.com/kuntal-gupta/adsiapkit.git#v1.3.0
+https://github.com/kuntal-gupta/adsiapkit.git#v1.3.1
 ```
 
 Or add it to `Packages/manifest.json`:
 
 ```json
-"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.3.0"
+"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.3.1"
 ```
 
-The `#v1.3.0` tag pins a version. Use `#main` to follow the latest changes.
+The `#v1.3.1` tag pins a version. Use `#main` to follow the latest changes.
 
 ### 2. Install the SDKs you need
 
@@ -55,7 +55,7 @@ Pick an ad network and turn on IAP in the setup window: it lists the packages yo
 
 ### 3. Configure
 
-Open **Window → AdsIAPKit → Setup Window**. The first time, it creates the settings in `Assets/Resources/AdsIAPKit/`:
+Open **Tools → AdsIAPKit → Setup Window**. The first time, it creates the settings in `Assets/Resources/AdsIAPKit/`:
 
 - `AdsIAPSettings.asset`: the master asset the kit loads at runtime
 - `AdsConfig.asset`: active ad network, ad unit IDs, test mode, consent, ATT
@@ -210,7 +210,7 @@ Static events: `OnIAPInitialized`, `OnPurchaseSuccess(id)`, `OnPurchaseFailure(i
 
 | Problem | Fix |
 |---|---|
-| "AdsIAPSettings not found in Resources" | Open **Window → AdsIAPKit → Setup Window** once to create the settings |
+| "AdsIAPSettings not found in Resources" | Open **Tools → AdsIAPKit → Setup Window** once to create the settings |
 | AdMob never initializes | Check that `com.google.ads.mobile` is installed as a package and the AdMob app IDs are set in **Assets → Google Mobile Ads → Settings** |
 | No ads in the EEA/UK | Publish a consent message in AdMob **Privacy & messaging** |
 | Purchase succeeded but nothing was granted | Set `IAPManager.PurchaseHandler` before `Initialize`; the purchase is delivered again on the next launch |
