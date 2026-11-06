@@ -37,6 +37,16 @@ namespace AdsIAPKit
             MaxSdkCallbacks.Interstitial.OnAdHiddenEvent           += (adUnitId, info) => { _onInterstitialClosed?.Invoke(); LoadInterstitial(); };
             MaxSdkCallbacks.Rewarded.OnAdReceivedRewardEvent        += (adUnitId, reward, info) => _onRewardedResult?.Invoke(true);
             MaxSdkCallbacks.Rewarded.OnAdHiddenEvent                += (adUnitId, info) => LoadRewarded();
+            MaxSdkCallbacks.Banner.OnAdLoadedEvent                  += (adUnitId, info) =>
+            {
+                _bannerLoaded = true;
+                if (_bannerWanted) ReportBannerLayout();
+            };
+            MaxSdkCallbacks.Banner.OnAdLoadFailedEvent              += (adUnitId, error) =>
+            {
+                // MAX keeps showing the previous banner on a failed refresh; only clear if nothing ever loaded.
+                if (!_bannerLoaded) AdsManager.SetBannerLayout(false, 0f);
+            };
 #else
             Debug.LogWarning("[AdsIAPKit] AppLovin MAX SDK not found. " +
                              "Import the AppLovin MAX Unity Plugin.");
@@ -61,14 +71,38 @@ namespace AdsIAPKit
         }
 
         // ── Banner ─────────────────────────────────────────────────────────────
+#pragma warning disable CS0414 // read only when the MAX SDK is installed
+        private bool _bannerWanted;
+        private bool _bannerLoaded;
+        private bool _bannerCreated;
+#pragma warning restore CS0414
+
         public void ShowBanner()
         {
+            _bannerWanted = true;
             AdsIAPSettings.Log($"[AppLovin] ShowBanner ({BannerId})");
 #if APPLOVIN_ENABLED
-            MaxSdk.CreateBanner(BannerId, (MaxSdk.BannerPosition)(int)_settings.bannerPosition);
+            if (!_bannerCreated)
+            {
+                MaxSdk.CreateBanner(BannerId, (MaxSdk.BannerPosition)(int)_settings.bannerPosition);
+                _bannerCreated = true;
+            }
             MaxSdk.ShowBanner(BannerId);
+            if (_bannerLoaded) ReportBannerLayout();
+#else
+            if (Application.isEditor) AdsManager.SetBannerLayout(true, AdsManager.DpToPixels(50f));
 #endif
         }
+
+#if APPLOVIN_ENABLED
+        private void ReportBannerLayout()
+        {
+            // MAX uses adaptive banners by default; the height is in dp.
+            var heightDp = MaxSdkUtils.GetAdaptiveBannerHeight();
+            if (heightDp <= 0f) heightDp = MaxSdkUtils.IsTablet() ? 90f : 50f;
+            AdsManager.SetBannerLayout(true, heightDp * MaxSdkUtils.GetScreenDensity());
+        }
+#endif
 
         public void HideBanner()
         {
@@ -76,6 +110,8 @@ namespace AdsIAPKit
 #if APPLOVIN_ENABLED
             MaxSdk.HideBanner(BannerId);
 #endif
+            _bannerWanted = false;
+            AdsManager.SetBannerLayout(false, 0f);
         }
 
         public void DestroyBanner()
@@ -83,7 +119,11 @@ namespace AdsIAPKit
             AdsIAPSettings.Log("[AppLovin] DestroyBanner");
 #if APPLOVIN_ENABLED
             MaxSdk.DestroyBanner(BannerId);
+            _bannerCreated = false;
 #endif
+            _bannerWanted = false;
+            _bannerLoaded = false;
+            AdsManager.SetBannerLayout(false, 0f);
         }
 
         // ── Interstitial ───────────────────────────────────────────────────────

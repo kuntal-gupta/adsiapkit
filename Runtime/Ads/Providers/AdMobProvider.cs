@@ -154,6 +154,7 @@ namespace AdsIAPKit
             if (_bannerView != null)
             {
                 _bannerView.Show();
+                if (_bannerLoaded) ReportBannerLayout();
                 return;
             }
 
@@ -162,18 +163,25 @@ namespace AdsIAPKit
             {
                 Debug.Log("[AdsIAPKit] AdMob banner loaded.");
                 AdsIAPSettings.Log("[AdMob] Banner loaded.");
+                _bannerLoaded = _bannerView != null;
                 if (!_bannerWanted) _bannerView?.Hide();
+                else ReportBannerLayout();
             });
             _bannerView.OnBannerAdLoadFailed += error => AdsManager.RunOnMainThread(() =>
             {
                 Debug.LogError($"[AdsIAPKit] AdMob banner failed to load: {error.GetCode()} - {error.GetMessage()}");
                 _bannerView?.Destroy();
                 _bannerView = null;
+                _bannerLoaded = false;
+                AdsManager.SetBannerLayout(false, 0f);
                 AdsManager.RunDelayed(RetryDelay, () => { if (_bannerWanted) ShowBanner(); });
             });
             _bannerView.OnAdPaid += adValue => AdsManager.RunOnMainThread(() =>
                 AdsManager.RaiseImpressionRevenue(adValue.Value / 1000000d));
             _bannerView.LoadAd(new AdRequest());
+#else
+            // No SDK: simulate a standard banner in the Editor so layouts can be checked.
+            if (Application.isEditor) AdsManager.SetBannerLayout(true, AdsManager.DpToPixels(50f));
 #endif
         }
 
@@ -184,6 +192,7 @@ namespace AdsIAPKit
 #if ADMOB_ENABLED
             _bannerView?.Hide();
 #endif
+            AdsManager.SetBannerLayout(false, 0f);
         }
 
         public void DestroyBanner()
@@ -193,11 +202,23 @@ namespace AdsIAPKit
 #if ADMOB_ENABLED
             _bannerView?.Destroy();
             _bannerView = null;
+            _bannerLoaded = false;
 #endif
+            AdsManager.SetBannerLayout(false, 0f);
         }
 
 #if ADMOB_ENABLED
         private BannerView _bannerView;
+        private bool       _bannerLoaded;
+
+        private void ReportBannerLayout()
+        {
+            if (_bannerView == null) return;
+            var height = _bannerView.GetHeightInPixels();
+            // Some SDK versions report 0 before the first layout pass; fall back to the requested size.
+            if (height <= 0f) height = AdsManager.DpToPixels(ResolveBannerSize().Height);
+            AdsManager.SetBannerLayout(true, height);
+        }
 
         private AdSize ResolveBannerSize()
         {

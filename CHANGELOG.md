@@ -3,6 +3,15 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-11-06
+
+### Added
+- Banner layout state: `AdsManager.IsBannerRequested`, `IsBannerLoaded`, `BannerHeightPixels`, `BannerEdge`, `GetBannerHeight(Canvas)` and the `OnBannerLayoutChanged` event. AdMob reports the real loaded height (adaptive banners included) and AppLovin MAX the adaptive height; Unity Ads and IronSource report their standard size. Without an ad SDK the Editor simulates a 50 dp banner.
+- **Banner Safe Area** component (`BannerSafeArea`). Put it on a scene's content panel to inset it by the banner height, so UI never sits under the banner. It can reserve the space as soon as a banner is requested so the layout does not jump when the ad loads.
+
+### Changed
+- AppLovin MAX creates the banner once and reuses it on later `ShowBanner()` calls instead of creating it on every call.
+
 ## [1.3.3] - 2026-11-06
 
 ### Added

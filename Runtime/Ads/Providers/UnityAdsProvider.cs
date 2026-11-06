@@ -52,11 +52,22 @@ namespace AdsIAPKit
 #if UNITY_ADS_ENABLED
             BannerLoadOptions options = new BannerLoadOptions
             {
-                loadCallback  = () => Advertisement.Banner.Show(BannerUnitId),
-                errorCallback = err => Debug.LogError($"Banner error: {err}")
+                loadCallback  = () =>
+                {
+                    Advertisement.Banner.Show(BannerUnitId);
+                    // Unity Ads banners are 320x50 dp.
+                    AdsManager.SetBannerLayout(true, AdsManager.DpToPixels(50f));
+                },
+                errorCallback = err =>
+                {
+                    Debug.LogError($"Banner error: {err}");
+                    AdsManager.SetBannerLayout(false, 0f);
+                }
             };
             Advertisement.Banner.SetPosition((BannerPosition)(int)_settings.bannerPosition);
             Advertisement.Banner.Load(BannerUnitId, options);
+#else
+            if (Application.isEditor) AdsManager.SetBannerLayout(true, AdsManager.DpToPixels(50f));
 #endif
         }
 
@@ -66,6 +77,7 @@ namespace AdsIAPKit
 #if UNITY_ADS_ENABLED
             Advertisement.Banner.Hide();
 #endif
+            AdsManager.SetBannerLayout(false, 0f);
         }
 
         public void DestroyBanner()
@@ -74,6 +86,7 @@ namespace AdsIAPKit
 #if UNITY_ADS_ENABLED
             Advertisement.Banner.Hide(true);
 #endif
+            AdsManager.SetBannerLayout(false, 0f);
         }
 
         // ── Interstitial ───────────────────────────────────────────────────────

@@ -103,7 +103,7 @@ Open **Ads → 🔀 Mediation**. What you see depends on the active network.
 
    Available: AppLovin, Unity Ads, IronSource, Meta Audience Network, Liftoff Monetize, Mintegral, Pangle, InMobi, DT Exchange, Chartboost, Moloco, myTarget.
 3. In the **AdMob console → Mediation → Create mediation group**, create one group per ad format (banner, interstitial, rewarded). Add your ad units, then add each network as a bidding or waterfall source with the IDs from that network's dashboard.
-4. Test on a device (section 3.4).
+4. Test on a device (section 3.5).
 
 #### AppLovin MAX mediation
 
@@ -144,7 +144,27 @@ privacyButton.SetActive(AdsManager.Instance.IsPrivacyOptionsRequired);
 privacyButton.onClick.AddListener(() => AdsManager.Instance.ShowPrivacyOptions());
 ```
 
-### 3.4 Check mediation on a device
+### 3.4 Keep UI clear of the banner
+
+Add **Add Component → AdsIAPKit → Banner Safe Area** to each scene's content panel (a RectTransform stretched over the screen that holds the buttons and gameplay, not the background). While a banner is showing, the panel's bottom edge (top edge for a top banner) moves in by the banner's height; when the banner hides or ads are removed, it goes back.
+
+| Field | Description |
+|---|---|
+| Reserve Before Load | Keep the space free from the moment `ShowBanner()` is called, so the layout does not jump when the ad arrives |
+| Reserved Height Dp | Space reserved before the real height is known. Phone banners are 50–60 dp, tablet banners 90 dp |
+| Padding | Extra gap above the banner, in canvas units |
+
+For custom layouts, read the state from code:
+
+```csharp
+AdsManager.OnBannerLayoutChanged += () =>
+{
+    float height = AdsManager.IsBannerLoaded ? AdsManager.GetBannerHeight(myCanvas) : 0f;
+    bottomBar.anchoredPosition = new Vector2(0f, height);
+};
+```
+
+### 3.5 Check mediation on a device
 
 Add a hidden debug button to a test build:
 
@@ -154,7 +174,7 @@ AdsManager.Instance.OpenAdDebugger();
 
 This opens AdMob's **Ad Inspector** or AppLovin's **Mediation Debugger**. They list each network, whether its adapter loaded, and let you request test ads from each one. For AdMob, register your device as a test device in the AdMob console first.
 
-### 3.5 iOS App Tracking Transparency
+### 3.6 iOS App Tracking Transparency
 
 **Ads → 🔒 iOS App Tracking Transparency.** With **Request ATT** on, install the **iOS 14 Advertising Support** package from the row that appears. The kit asks for permission at startup and writes your **Usage Description** to `Info.plist` during the iOS build.
 
@@ -507,7 +527,7 @@ In a build, a missing SDK reports "not initialized", so nothing is ever granted 
 ### Ads on a device
 
 - Keep **Test Mode** and **Use Google Test IDs** on. Clicking real ads on your own app can get your AdMob account suspended.
-- For mediation, register your device as a test device and use `OpenAdDebugger()` (section 3.4).
+- For mediation, register your device as a test device and use `OpenAdDebugger()` (section 3.5).
 
 ### Purchases on Android
 

@@ -51,7 +51,16 @@ namespace AdsIAPKit
 #if IRONSOURCE_ENABLED
             IronSource.Agent.displayBanner();
 #endif
+            // The plugin used here has no banner-loaded callback, so report the configured size on display.
+            AdsManager.SetBannerLayout(true, AdsManager.DpToPixels(BannerHeightDp));
         }
+
+        private float BannerHeightDp =>
+            _settings.bannerSize == IronSourceBannerSize.Rectangle ? 250f
+            : _settings.bannerSize == IronSourceBannerSize.Smart && IsTablet ? 90f
+            : 50f;
+
+        private static bool IsTablet => Screen.dpi > 0f && Mathf.Min(Screen.width, Screen.height) / Screen.dpi >= 3.5f;
 
         public void HideBanner()
         {
@@ -59,6 +68,7 @@ namespace AdsIAPKit
 #if IRONSOURCE_ENABLED
             IronSource.Agent.hideBanner();
 #endif
+            AdsManager.SetBannerLayout(false, 0f);
         }
 
         public void DestroyBanner()
@@ -67,6 +77,7 @@ namespace AdsIAPKit
 #if IRONSOURCE_ENABLED
             IronSource.Agent.destroyBanner();
 #endif
+            AdsManager.SetBannerLayout(false, 0f);
         }
 
         // ── Interstitial ───────────────────────────────────────────────────────

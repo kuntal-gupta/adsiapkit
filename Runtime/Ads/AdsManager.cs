@@ -10,6 +10,9 @@ namespace AdsIAPKit
     /// Drop this prefab in your first scene, or call AdsManager.Instance from anywhere.
     /// It auto-picks the provider that is active in AdsConfig.
     /// </summary>
+    /// <summary>The screen edge a banner is anchored to.</summary>
+    public enum BannerEdge { Bottom, Top, None }
+
     public class AdsManager : MonoBehaviour
     {
         // ── Singleton ──────────────────────────────────────────────────────────
@@ -32,7 +35,6 @@ namespace AdsIAPKit
         private IAdsProvider _provider;
         private AdsConfig    _config;
         private bool          _adsInitializedEventRaised;
-        private bool          _bannerRequested;
 
         public bool  IsInitialized => _provider?.IsInitialized ?? false;
         public string ProviderName  => _provider?.ProviderName ?? "None";
@@ -42,6 +44,62 @@ namespace AdsIAPKit
         public static event Action              OnInterstitialClosed;
         public static event Action<bool>        OnRewardedResult;   // true = rewarded
         public static event Action<double>      OnImpressionRevenue; // for ILRD
+
+        /// <summary>
+        /// Raised on the main thread whenever the banner is requested, loads, hides, or changes height.
+        /// Read IsBannerLoaded, BannerHeightPixels and BannerEdge in the handler.
+        /// </summary>
+        public static event Action              OnBannerLayoutChanged;
+
+        // ── Banner layout ──────────────────────────────────────────────────────
+        /// <summary>True when the game has asked for a banner (ShowBanner called, not hidden or destroyed).</summary>
+        public static bool       IsBannerRequested  { get; private set; }
+
+        /// <summary>True when a banner has loaded and is on screen.</summary>
+        public static bool       IsBannerLoaded     { get; private set; }
+
+        /// <summary>Height of the banner on screen, in screen pixels. 0 when no banner is showing.</summary>
+        public static float      BannerHeightPixels { get; private set; }
+
+        /// <summary>The screen edge the banner is anchored to, from the active provider's settings.</summary>
+        public static BannerEdge BannerEdge         { get; private set; } = BannerEdge.Bottom;
+
+        /// <summary>Banner height in the units of the given canvas (screen pixels / canvas scale factor).</summary>
+        public static float GetBannerHeight(Canvas canvas)
+        {
+            if (canvas == null) return BannerHeightPixels;
+            var scale = canvas.rootCanvas.scaleFactor;
+            return scale > 0f ? BannerHeightPixels / scale : BannerHeightPixels;
+        }
+
+        /// <summary>Converts density-independent pixels (dp / points) to screen pixels.</summary>
+        public static float DpToPixels(float dp)
+        {
+            var dpi = Screen.dpi;
+            if (dpi <= 0f) dpi = 160f;
+            return dp * dpi / 160f;
+        }
+
+        // Providers report here when their banner loads, shows, hides or is destroyed.
+        internal static void SetBannerLayout(bool loaded, float heightPixels)
+        {
+            RunOnMainThread(() =>
+            {
+                heightPixels = loaded ? Mathf.Max(0f, heightPixels) : 0f;
+                if (IsBannerLoaded == loaded && Mathf.Approximately(BannerHeightPixels, heightPixels)) return;
+                IsBannerLoaded = loaded;
+                BannerHeightPixels = heightPixels;
+                AdsIAPSettings.Log($"Banner layout: loaded={loaded}, height={heightPixels:0}px, edge={BannerEdge}");
+                OnBannerLayoutChanged?.Invoke();
+            });
+        }
+
+        private static void SetBannerRequested(bool requested)
+        {
+            if (IsBannerRequested == requested) return;
+            IsBannerRequested = requested;
+            OnBannerLayoutChanged?.Invoke();
+        }
 
         // ── Unity lifecycle ────────────────────────────────────────────────────
         // Supports Enter Play Mode without a domain reload.
@@ -53,6 +111,11 @@ namespace AdsIAPKit
             OnInterstitialClosed = null;
             OnRewardedResult = null;
             OnImpressionRevenue = null;
+            OnBannerLayoutChanged = null;
+            IsBannerRequested = false;
+            IsBannerLoaded = false;
+            BannerHeightPixels = 0f;
+            BannerEdge = BannerEdge.Bottom;
             lock (MainThreadQueue) MainThreadQueue.Clear();
         }
 
@@ -86,7 +149,7 @@ namespace AdsIAPKit
         // while the native banner on a device survives. Recreate it so the Editor matches the device.
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (mode != LoadSceneMode.Single || !_bannerRequested || !IsInitialized) return;
+            if (mode != LoadSceneMode.Single || !IsBannerRequested || !IsInitialized) return;
             try { _provider.DestroyBanner(); }
             catch (Exception exception) { Debug.LogException(exception); }
             _provider.ShowBanner();
@@ -100,6 +163,7 @@ namespace AdsIAPKit
             if (settings == null || settings.adsConfig == null) return;
 
             _config = settings.adsConfig;
+            BannerEdge = ResolveBannerEdge(_config);
             AttTracking.RequestIfNeeded(_config);
             _provider = CreateProvider(_config.activeProvider);
 
@@ -141,8 +205,46 @@ namespace AdsIAPKit
             if (_adsInitializedEventRaised) return;
             _adsInitializedEventRaised = true;
             OnAdsInitialized?.Invoke();
-            if (_bannerRequested)
+            if (IsBannerRequested)
                 _provider.ShowBanner();
+        }
+
+        private static BannerEdge ResolveBannerEdge(AdsConfig config)
+        {
+            switch (config.activeProvider)
+            {
+                case AdsProviderType.AdMob:
+                    switch (config.adMob.bannerPosition)
+                    {
+                        case AdMobBannerPosition.Top:
+                        case AdMobBannerPosition.TopLeft:
+                        case AdMobBannerPosition.TopRight: return BannerEdge.Top;
+                        case AdMobBannerPosition.Center:   return BannerEdge.None;
+                        default:                           return BannerEdge.Bottom;
+                    }
+                case AdsProviderType.UnityAds:
+                    switch (config.unityAds.bannerPosition)
+                    {
+                        case UnityAdsBannerPosition.TopCenter:
+                        case UnityAdsBannerPosition.TopLeft:
+                        case UnityAdsBannerPosition.TopRight: return BannerEdge.Top;
+                        case UnityAdsBannerPosition.Center:   return BannerEdge.None;
+                        default:                              return BannerEdge.Bottom;
+                    }
+                case AdsProviderType.IronSource:
+                    return config.ironSource.bannerPosition == IronSourceBannerPosition.Top ? BannerEdge.Top : BannerEdge.Bottom;
+                case AdsProviderType.AppLovin:
+                    switch (config.appLovin.bannerPosition)
+                    {
+                        case AppLovinBannerPosition.TopLeft:
+                        case AppLovinBannerPosition.TopCenter:
+                        case AppLovinBannerPosition.TopRight: return BannerEdge.Top;
+                        case AppLovinBannerPosition.Centered: return BannerEdge.None;
+                        default:                              return BannerEdge.Bottom;
+                    }
+                default:
+                    return BannerEdge.Bottom;
+            }
         }
 
         internal static void RaiseImpressionRevenue(double revenue)
@@ -202,21 +304,23 @@ namespace AdsIAPKit
         // ── Banner ─────────────────────────────────────────────────────────────
         public void ShowBanner()
         {
-            _bannerRequested = true;
+            SetBannerRequested(true);
             if (!CheckReady("ShowBanner")) return;
             _provider.ShowBanner();
         }
 
         public void HideBanner()
         {
-            _bannerRequested = false;
+            SetBannerRequested(false);
             _provider?.HideBanner();
+            SetBannerLayout(false, 0f);
         }
 
         public void DestroyBanner()
         {
-            _bannerRequested = false;
+            SetBannerRequested(false);
             _provider?.DestroyBanner();
+            SetBannerLayout(false, 0f);
         }
 
         // ── Interstitial ───────────────────────────────────────────────────────

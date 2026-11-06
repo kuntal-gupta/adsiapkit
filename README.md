@@ -163,12 +163,14 @@ With **ATT** on and `com.unity.ads.ios-support` installed, the kit requests trac
 |---|---|
 | `IsInitialized`, `ProviderName` | SDK state and active network |
 | `ShowBanner()`, `HideBanner()`, `DestroyBanner()` | Banner control |
+| `IsBannerRequested`, `IsBannerLoaded`, `BannerHeightPixels`, `BannerEdge` (static) | Banner layout: whether a banner is wanted, on screen, its height in screen pixels and its edge |
+| `GetBannerHeight(Canvas)`, `DpToPixels(float)` (static) | Banner height in canvas units; dp to screen pixels |
 | `IsInterstitialReady()`, `ShowInterstitial(Action onClosed)` | Interstitial |
 | `IsRewardedReady()`, `ShowRewarded(Action<bool> onResult)` | Rewarded; `true` means the user earned the reward |
 | `IsPrivacyOptionsRequired`, `ShowPrivacyOptions(Action onClosed)` | UMP privacy options (AdMob) |
 | `OpenAdDebugger()` | AdMob Ad Inspector or AppLovin Mediation Debugger, for test builds |
 
-Static events: `OnAdsInitialized`, `OnInterstitialClosed`, `OnRewardedResult(bool)`, `OnImpressionRevenue(double)`. Impression revenue is in the ad network's currency, in whole units (not micros).
+Static events: `OnAdsInitialized`, `OnInterstitialClosed`, `OnRewardedResult(bool)`, `OnImpressionRevenue(double)`, `OnBannerLayoutChanged`. Impression revenue is in the ad network's currency, in whole units (not micros).
 
 ### `IAPManager`
 
