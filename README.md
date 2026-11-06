@@ -25,16 +25,16 @@ One API for mobile ads and in-app purchases in Unity. Pick an ad network in a se
 **Package Manager → + → Add package from git URL…**
 
 ```
-https://github.com/kuntal-gupta/adsiapkit.git#v1.3.1
+https://github.com/kuntal-gupta/adsiapkit.git#v1.3.2
 ```
 
 Or add it to `Packages/manifest.json`:
 
 ```json
-"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.3.1"
+"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.3.2"
 ```
 
-The `#v1.3.1` tag pins a version. Use `#main` to follow the latest changes.
+The `#v1.3.2` tag pins a version. Use `#main` to follow the latest changes.
 
 ### 2. Install the SDKs you need
 

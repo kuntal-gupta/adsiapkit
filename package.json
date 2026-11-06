@@ -1,6 +1,6 @@
 {
   "name": "com.puzzlecraftgames.adsiapkit",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "displayName": "Ads & IAP Kit",
   "description": "One API for mobile ads and in-app purchases. Switch between AdMob, Unity Ads, IronSource and AppLovin MAX from a setup window that installs the SDKs and mediation adapters for you, with Unity IAP 5, a product catalog editor, a ready-made shop UI, Google UMP consent and iOS App Tracking Transparency built in.\n\nAd and IAP SDKs are optional: install only the ones you use.",
   "unity": "2022.3",

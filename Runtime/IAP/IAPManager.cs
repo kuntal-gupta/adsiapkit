@@ -31,6 +31,14 @@ namespace AdsIAPKit
         public static event Action OnIAPInitialized;
         public static event Action<string> OnPurchaseSuccess;
         public static event Action<string, string> OnPurchaseFailure;
+        /// <summary>
+        /// The purchase waits for approval or payment (iOS Ask to Buy, Google Play cash payments).
+        /// Nothing is granted yet; once approved it arrives as a normal purchase and OnPurchaseSuccess fires.
+        /// </summary>
+        public static event Action<string> OnPurchaseDeferred;
+
+        /// <summary>Message passed to Purchase callbacks for a deferred purchase.</summary>
+        public const string DeferredMessage = "Purchase pending approval";
         public static event Action<string> OnRestoreSuccess;
         public static event Action OnRestoreFailed;
 
@@ -54,6 +62,7 @@ namespace AdsIAPKit
             OnIAPInitialized = null;
             OnPurchaseSuccess = null;
             OnPurchaseFailure = null;
+            OnPurchaseDeferred = null;
             OnRestoreSuccess = null;
             OnRestoreFailed = null;
         }
@@ -95,6 +104,7 @@ namespace AdsIAPKit
                 _controller = UnityEngine.Purchasing.UnityIAPServices.StoreController();
                 _controller.OnPurchasePending += OnPurchasePending;
                 _controller.OnPurchaseFailed += OnPurchaseFailed;
+                _controller.OnPurchaseDeferred += OnPurchaseDeferredByStore;
                 _controller.OnProductsFetched += OnProductsFetched;
                 _controller.OnProductsFetchFailed += OnProductsFetchFailed;
                 _controller.OnPurchasesFetched += OnPurchasesFetched;
@@ -187,6 +197,23 @@ namespace AdsIAPKit
             // Leave the order pending if anything was not granted; the store delivers it again later.
             if (allGranted) _controller.ConfirmPurchase(order);
             else Debug.LogWarning("[AdsIAPKit] Purchase not confirmed because it could not be granted yet.");
+        }
+
+        private void OnPurchaseDeferredByStore(UnityEngine.Purchasing.DeferredOrder order)
+        {
+            var items = order.CartOrdered.Items();
+            if (items == null) return;
+            foreach (var item in items)
+            {
+                var id = item.Product.definition.id;
+                if (_pendingPurchases.TryGetValue(id, out var callback))
+                {
+                    callback.Invoke(false, DeferredMessage);
+                    _pendingPurchases.Remove(id);
+                }
+                AdsIAPSettings.Log($"Purchase deferred: {id}");
+                OnPurchaseDeferred?.Invoke(id);
+            }
         }
 
         private void OnPurchaseFailed(UnityEngine.Purchasing.FailedOrder failedOrder)

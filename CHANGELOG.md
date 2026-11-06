@@ -3,6 +3,14 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.3.2] - 2026-11-06
+
+### Fixed
+- Deferred purchases (iOS Ask to Buy, Google Play pending payments) are handled. Unity IAP no longer warns "Purchase called without a callback defined for IPurchaseService.OnPurchaseDeferred", and the Purchase callback ends with `IAPManager.DeferredMessage` instead of waiting forever.
+
+### Added
+- `IAPManager.OnPurchaseDeferred` event. Nothing is granted until the store approves; the purchase then arrives through `PurchaseHandler` and `OnPurchaseSuccess` as usual.
+
 ## [1.3.1] - 2026-11-06
 
 ### Changed
