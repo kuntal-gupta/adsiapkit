@@ -37,14 +37,11 @@ namespace AdsIAPKit.Samples
             var product = AdsIAPSettings.Instance?.iapConfig?.GetProduct(productId);
             if (product == null) return false;
 
-            if (product.rewardType == RewardType.RemoveAds)
+            if (product.rewardType != RewardType.RemoveAds) _coins += product.rewardAmount;
+            if (product.RemovesAds())
             {
                 _adsRemoved = true;
                 AdsManager.Instance.DestroyBanner();
-            }
-            else
-            {
-                _coins += product.rewardAmount;
             }
 
             _status = $"Purchased {product.displayName}";

@@ -104,6 +104,28 @@ namespace AdsIAPKit.Tests
         }
 
         [Test]
+        public void RemovesAds_TrueForRemoveAdsAndBundles()
+        {
+            var removeAds = new IAPProduct { rewardType = RewardType.RemoveAds };
+            var pack = Coins("game.coins_big");
+            Assert.IsTrue(removeAds.RemovesAds());
+            Assert.IsFalse(pack.RemovesAds());
+            pack.alsoRemovesAds = true;
+            Assert.IsTrue(pack.RemovesAds());
+        }
+
+        [Test]
+        public void ConsumableBundleWithNoAds_IsWarning()
+        {
+            var pack = Coins("game.coins_big");
+            pack.alsoRemovesAds = true;
+            _config.products.Add(pack);
+            Assert.IsTrue(_config.Validate().Exists(i =>
+                i.Severity == IAPIssueSeverity.Warning && i.Message.Contains("not restored after a reinstall")));
+            Assert.IsFalse(_config.Validate().Exists(i => i.Severity == IAPIssueSeverity.Error));
+        }
+
+        [Test]
         public void DisabledProduct_SkipsStoreChecks()
         {
             var product = Coins("Bad ID");

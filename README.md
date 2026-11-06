@@ -25,16 +25,16 @@ One API for mobile ads and in-app purchases in Unity. Pick an ad network in a se
 **Package Manager → + → Add package from git URL…**
 
 ```
-https://github.com/kuntal-gupta/adsiapkit.git#v1.1.0
+https://github.com/kuntal-gupta/adsiapkit.git#v1.2.0
 ```
 
 Or add it to `Packages/manifest.json`:
 
 ```json
-"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.1.0"
+"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.2.0"
 ```
 
-The `#v1.1.0` tag pins a version. Use `#main` to follow the latest changes.
+The `#v1.2.0` tag pins a version. Use `#main` to follow the latest changes.
 
 ### 2. Install the SDKs you need
 
@@ -105,14 +105,13 @@ void Start()
         var product = AdsIAPSettings.Instance.iapConfig.GetProduct(productId);
         if (product == null) return false;
 
-        if (product.rewardType == RewardType.RemoveAds)
+        if (product.rewardType != RewardType.RemoveAds) AddCoins(product.rewardAmount);
+
+        // Remove Ads itself, or a coin pack with Also Removes Ads ticked.
+        if (product.RemovesAds())
         {
             SaveRemoveAds();
             AdsManager.Instance.DestroyBanner();
-        }
-        else
-        {
-            AddCoins(product.rewardAmount);
         }
         return true;
     };

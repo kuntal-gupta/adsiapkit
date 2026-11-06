@@ -75,6 +75,10 @@ namespace AdsIAPKit
                 if ((p.rewardType == RewardType.Currency || p.rewardType == RewardType.Item || p.rewardType == RewardType.Feature) &&
                     string.IsNullOrWhiteSpace(p.rewardId))
                     Warning("Reward ID is empty; your purchase handler cannot tell what to grant.");
+                if (p.alsoRemovesAds && p.rewardType == RewardType.RemoveAds)
+                    Warning("Also Removes Ads is redundant on a Remove Ads product.");
+                else if (p.alsoRemovesAds && p.productType == IAPProductType.Consumable)
+                    Warning("No Ads from a Consumable is not restored after a reinstall. Also sell a Non-Consumable Remove Ads so players can restore it.");
                 if (p.rewardType == RewardType.Currency && p.productType != IAPProductType.Consumable)
                     Warning("Currency packs are usually Consumable so players can buy them again.");
             }
@@ -124,6 +128,8 @@ namespace AdsIAPKit
         public RewardType rewardType   = RewardType.Currency;
         public string     rewardId     = "coins";
         public int        rewardAmount = 100;
+        [Tooltip("Also removes ads, e.g. a big coin pack with No Ads. Your purchase handler grants it: check RemovesAds().")]
+        public bool       alsoRemovesAds = false;
 
         [Header("UI")]
         public Sprite icon;
@@ -149,6 +155,9 @@ namespace AdsIAPKit
         // Runtime helpers
         public string GetAndroidId() => string.IsNullOrEmpty(androidId) ? id : androidId;
         public string GetIOSId()     => string.IsNullOrEmpty(iosId)     ? id : iosId;
+
+        /// <summary>True when buying this product should turn ads off: Remove Ads itself, or a bundle that includes it.</summary>
+        public bool RemovesAds() => rewardType == RewardType.RemoveAds || alsoRemovesAds;
 
         /// <summary>Badge to show, or empty for none.</summary>
         public string GetBadgeText() =>

@@ -290,9 +290,11 @@ namespace AdsIAPKit.Editor
                     p.rewardId     = EditorGUILayout.TextField(new GUIContent(p.rewardType == RewardType.Currency ? "Currency ID" : "Item ID",
                         "e.g. coins, gems, hint"), p.rewardId);
                     p.rewardAmount = EditorGUILayout.IntField("Amount", p.rewardAmount);
+                    p.alsoRemovesAds = EditorGUILayout.Toggle(new GUIContent("Also Removes Ads", AlsoRemovesAdsHelp), p.alsoRemovesAds);
                     break;
                 case RewardType.Feature:
                     p.rewardId = EditorGUILayout.TextField(new GUIContent("Feature ID", "e.g. premium, all_levels"), p.rewardId);
+                    p.alsoRemovesAds = EditorGUILayout.Toggle(new GUIContent("Also Removes Ads", AlsoRemovesAdsHelp), p.alsoRemovesAds);
                     break;
                 case RewardType.RemoveAds:
                     EditorGUILayout.LabelField(" ", "Your handler should save it and call AdsManager.Instance.DestroyBanner().",
@@ -301,6 +303,7 @@ namespace AdsIAPKit.Editor
                 case RewardType.Custom:
                     p.rewardId     = EditorGUILayout.TextField(new GUIContent("Reward ID", "Any key your handler understands"), p.rewardId);
                     p.rewardAmount = EditorGUILayout.IntField("Amount", p.rewardAmount);
+                    p.alsoRemovesAds = EditorGUILayout.Toggle(new GUIContent("Also Removes Ads", AlsoRemovesAdsHelp), p.alsoRemovesAds);
                     break;
             }
 
@@ -348,6 +351,10 @@ namespace AdsIAPKit.Editor
                 }
             }
         }
+
+        private const string AlsoRemovesAdsHelp =
+            "This product also turns ads off, e.g. a big coin pack with No Ads. " +
+            "Your purchase handler grants it: check product.RemovesAds().";
 
         private const string TypeHelp =
             "Consumable: can be bought again (coins, hints).\n" +
@@ -539,7 +546,7 @@ namespace AdsIAPKit.Editor
         private static readonly string[] CsvColumns =
         {
             "ID", "DisplayName", "Description", "Type", "GooglePlayID", "AppStoreID", "FallbackPrice",
-            "RewardType", "RewardID", "RewardAmount", "Category", "Badge", "Sticker", "ShowTitle", "Featured", "Enabled", "HideInShop"
+            "RewardType", "RewardID", "RewardAmount", "AlsoRemovesAds", "Category", "Badge", "Sticker", "ShowTitle", "Featured", "Enabled", "HideInShop"
         };
 
         private void ExportCSV()
@@ -556,7 +563,7 @@ namespace AdsIAPKit.Editor
                 var fields = new[]
                 {
                     p.id, p.displayName, p.description, p.productType.ToString(), p.androidId, p.iosId, p.displayPrice,
-                    p.rewardType.ToString(), p.rewardId, p.rewardAmount.ToString(), p.category, p.badge,
+                    p.rewardType.ToString(), p.rewardId, p.rewardAmount.ToString(), p.alsoRemovesAds.ToString(), p.category, p.badge,
                     p.sticker, p.showTitle.ToString(), p.isFeatured.ToString(), p.isEnabled.ToString(), p.hideInShop.ToString()
                 };
                 sb.AppendLine(string.Join(",", fields.Select(CsvEscape)));
@@ -607,6 +614,7 @@ namespace AdsIAPKit.Editor
                 if (bool.TryParse(Get("Featured"), out var featured)) p.isFeatured = featured;
                 if (bool.TryParse(Get("Enabled"), out var enabled)) p.isEnabled = enabled;
                 if (bool.TryParse(Get("HideInShop"), out var hidden)) p.hideInShop = hidden;
+                if (bool.TryParse(Get("AlsoRemovesAds"), out var noAds)) p.alsoRemovesAds = noAds;
             }
 
             RefreshFolds();

@@ -3,6 +3,13 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-11-06
+
+### Added
+- Product **Also Removes Ads** option (`IAPProduct.alsoRemovesAds`) for bundles such as a coin pack with No Ads, set in the catalog editor and CSV (`AlsoRemovesAds` column).
+- `IAPProduct.RemovesAds()`: true for Remove Ads products and for bundles with Also Removes Ads, so a purchase handler needs one check.
+- Catalog check warns that No Ads from a Consumable is not restored after a reinstall.
+
 ## [1.1.0] - 2026-11-02
 
 ### Added
