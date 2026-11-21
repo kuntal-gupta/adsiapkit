@@ -220,6 +220,10 @@ namespace AdsIAPKit.Editor
                     cfg.iosBannerId     = EditorGUILayout.TextField("iOS Unit ID",     cfg.iosBannerId);
                     cfg.bannerPosition  = (AdMobBannerPosition)EditorGUILayout.EnumPopup("Position", cfg.bannerPosition);
                     cfg.bannerSize      = (AdMobBannerSize)EditorGUILayout.EnumPopup("Size", cfg.bannerSize);
+                    if (AdMobProvider.IsAdaptiveSize(cfg.bannerSize))
+                        cfg.adaptiveFallbackToStandard = EditorGUILayout.Toggle(
+                            new GUIContent("Fall Back To Standard", "If the adaptive banner fails to load, retry right away with the standard 320x50 banner"),
+                            cfg.adaptiveFallbackToStandard);
                 }
 
                 DrawSeparator(0.5f, 4f);

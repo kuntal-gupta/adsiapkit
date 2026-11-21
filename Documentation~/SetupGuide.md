@@ -137,6 +137,8 @@ if (AdsManager.Instance.IsRewardedReady())
     AdsManager.Instance.ShowRewarded(rewarded => { if (rewarded) GiveCoins(50); });
 ```
 
+With AdMob, a banner **Size** of **Adaptive** or **SmartBanner** asks for a full-width banner sized to the device. If that request fails, **Fall Back To Standard** (on by default) retries straight away with the standard 320×50 banner. If the standard banner fails too, the kit waits 30 seconds and tries the adaptive size again. A banner shown at the fallback size stays until it is destroyed (a scene change or Remove Ads), and the next banner asks for the adaptive size first.
+
 Add a **Privacy settings** button to your settings screen when consent is on. Google requires one:
 
 ```csharp

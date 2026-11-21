@@ -135,21 +135,39 @@ namespace AdsIAPKit
         // ── Banner ─────────────────────────────────────────────────────────────
         private bool _bannerWanted;
 
+        // True while an adaptive banner has failed and the standard 320x50 size is used instead.
+        // Cleared when the banner is destroyed (scene change, Remove Ads) and when the standard
+        // request fails too, so the next attempt asks for the adaptive size first again.
+        private bool _bannerFallback;
+
+        /// <summary>True for the sizes AdMob sizes itself to the screen width (Adaptive, SmartBanner).</summary>
+        public static bool IsAdaptiveSize(AdMobBannerSize size) =>
+            size == AdMobBannerSize.Adaptive || size == AdMobBannerSize.SmartBanner;
+
+        /// <summary>The size to request: the configured one, or the standard Banner while falling back.</summary>
+        public static AdMobBannerSize EffectiveBannerSize(AdMobBannerSize configured, bool fallbackActive) =>
+            fallbackActive && IsAdaptiveSize(configured) ? AdMobBannerSize.Banner : configured;
+
+        /// <summary>Whether a failed request should be retried right away with the standard size.</summary>
+        public static bool ShouldFallBackToStandard(AdMobSettings settings, bool fallbackActive) =>
+            settings.adaptiveFallbackToStandard && !fallbackActive && IsAdaptiveSize(settings.bannerSize);
+
+        private AdMobBannerSize CurrentBannerSize => EffectiveBannerSize(_settings.bannerSize, _bannerFallback);
+
         public void ShowBanner()
         {
             if (!_settings.bannerEnabled) return;
             _bannerWanted = true;
+            bool adaptive = IsAdaptiveSize(CurrentBannerSize);
 #if UNITY_IOS
-            string testBannerId = (_settings.bannerSize == AdMobBannerSize.Adaptive || _settings.bannerSize == AdMobBannerSize.SmartBanner)
-                ? TestAdaptiveBannerIdIOS : TestBannerIdIOS;
+            string testBannerId = adaptive ? TestAdaptiveBannerIdIOS : TestBannerIdIOS;
 #else
-            string testBannerId = (_settings.bannerSize == AdMobBannerSize.Adaptive || _settings.bannerSize == AdMobBannerSize.SmartBanner)
-                ? TestAdaptiveBannerId : TestBannerId;
+            string testBannerId = adaptive ? TestAdaptiveBannerId : TestBannerId;
 #endif
             string id = ResolveId(testBannerId, _settings.androidBannerId, _settings.iosBannerId);
 
-            Debug.Log($"[AdsIAPKit] Requesting AdMob banner ({id}).");
-            AdsIAPSettings.Log($"[AdMob] ShowBanner ({id})");
+            Debug.Log($"[AdsIAPKit] Requesting AdMob {(adaptive ? "adaptive" : "standard")} banner ({id}).");
+            AdsIAPSettings.Log($"[AdMob] ShowBanner {CurrentBannerSize} ({id})");
 #if ADMOB_ENABLED
             if (_bannerView != null)
             {
@@ -169,10 +187,22 @@ namespace AdsIAPKit
             });
             _bannerView.OnBannerAdLoadFailed += error => AdsManager.RunOnMainThread(() =>
             {
-                Debug.LogError($"[AdsIAPKit] AdMob banner failed to load: {error.GetCode()} - {error.GetMessage()}");
                 _bannerView?.Destroy();
                 _bannerView = null;
                 _bannerLoaded = false;
+
+                // An adaptive request that fails is retried at once with the standard 320x50 size.
+                if (ShouldFallBackToStandard(_settings, _bannerFallback))
+                {
+                    Debug.LogWarning($"[AdsIAPKit] AdMob adaptive banner failed to load ({error.GetCode()} - {error.GetMessage()}); trying a standard banner.");
+                    AdsIAPSettings.Log("[AdMob] Adaptive banner failed, falling back to a standard banner.");
+                    _bannerFallback = true;
+                    if (_bannerWanted) ShowBanner();
+                    return;
+                }
+
+                Debug.LogError($"[AdsIAPKit] AdMob banner failed to load: {error.GetCode()} - {error.GetMessage()}");
+                _bannerFallback = false; // the next attempt asks for the configured size first again
                 AdsManager.SetBannerLayout(false, 0f);
                 AdsManager.RunDelayed(RetryDelay, () => { if (_bannerWanted) ShowBanner(); });
             });
@@ -199,6 +229,7 @@ namespace AdsIAPKit
         {
             _bannerWanted = false;
             AdsIAPSettings.Log("[AdMob] DestroyBanner");
+            _bannerFallback = false;
 #if ADMOB_ENABLED
             _bannerView?.Destroy();
             _bannerView = null;
@@ -222,7 +253,7 @@ namespace AdsIAPKit
 
         private AdSize ResolveBannerSize()
         {
-            switch (_settings.bannerSize)
+            switch (CurrentBannerSize)
             {
                 case AdMobBannerSize.MediumRectangle: return AdSize.MediumRectangle;
                 case AdMobBannerSize.IABBanner: return AdSize.IABBanner;

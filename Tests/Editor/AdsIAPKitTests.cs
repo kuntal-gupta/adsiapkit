@@ -241,11 +241,71 @@ namespace AdsIAPKit.Tests
                 Assert.AreEqual(AdsProviderType.None, config.activeProvider);
                 Assert.IsTrue(config.enableTestMode);
                 Assert.IsTrue(config.adMob.useTestIds);
+                Assert.IsTrue(config.adMob.adaptiveFallbackToStandard);
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(config);
             }
+        }
+    }
+
+    public class AdMobBannerFallbackTests
+    {
+        [TestCase(AdMobBannerSize.Adaptive, true)]
+        [TestCase(AdMobBannerSize.SmartBanner, true)]
+        [TestCase(AdMobBannerSize.Banner, false)]
+        [TestCase(AdMobBannerSize.MediumRectangle, false)]
+        public void IsAdaptiveSize(AdMobBannerSize size, bool expected)
+        {
+            Assert.AreEqual(expected, AdMobProvider.IsAdaptiveSize(size));
+        }
+
+        [Test]
+        public void EffectiveSize_IsConfiguredSize_BeforeAnyFailure()
+        {
+            Assert.AreEqual(AdMobBannerSize.Adaptive, AdMobProvider.EffectiveBannerSize(AdMobBannerSize.Adaptive, false));
+        }
+
+        [Test]
+        public void EffectiveSize_IsStandardBanner_WhileFallingBack()
+        {
+            Assert.AreEqual(AdMobBannerSize.Banner, AdMobProvider.EffectiveBannerSize(AdMobBannerSize.Adaptive, true));
+            Assert.AreEqual(AdMobBannerSize.Banner, AdMobProvider.EffectiveBannerSize(AdMobBannerSize.SmartBanner, true));
+        }
+
+        [Test]
+        public void EffectiveSize_LeavesFixedSizesAlone()
+        {
+            Assert.AreEqual(AdMobBannerSize.MediumRectangle, AdMobProvider.EffectiveBannerSize(AdMobBannerSize.MediumRectangle, true));
+        }
+
+        [Test]
+        public void FirstAdaptiveFailure_FallsBack()
+        {
+            var settings = new AdMobSettings { bannerSize = AdMobBannerSize.Adaptive };
+            Assert.IsTrue(AdMobProvider.ShouldFallBackToStandard(settings, false));
+        }
+
+        [Test]
+        public void StandardFailureDuringFallback_DoesNotFallBackAgain()
+        {
+            var settings = new AdMobSettings { bannerSize = AdMobBannerSize.Adaptive };
+            Assert.IsFalse(AdMobProvider.ShouldFallBackToStandard(settings, true));
+        }
+
+        [Test]
+        public void FixedSizeFailure_DoesNotFallBack()
+        {
+            var settings = new AdMobSettings { bannerSize = AdMobBannerSize.Banner };
+            Assert.IsFalse(AdMobProvider.ShouldFallBackToStandard(settings, false));
+        }
+
+        [Test]
+        public void DisabledOption_DoesNotFallBack()
+        {
+            var settings = new AdMobSettings { bannerSize = AdMobBannerSize.Adaptive, adaptiveFallbackToStandard = false };
+            Assert.IsFalse(AdMobProvider.ShouldFallBackToStandard(settings, false));
         }
     }
 }

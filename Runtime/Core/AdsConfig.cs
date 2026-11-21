@@ -57,6 +57,8 @@ namespace AdsIAPKit
         public string iosBannerId     = "ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx";
         public AdMobBannerPosition bannerPosition = AdMobBannerPosition.Bottom;
         public AdMobBannerSize     bannerSize     = AdMobBannerSize.Banner;
+        [Tooltip("When an Adaptive or Smart banner fails to load, retry right away with the standard 320x50 banner.")]
+        public bool adaptiveFallbackToStandard = true;
 
         [Header("Interstitial")]
         public bool   interstitialEnabled   = true;

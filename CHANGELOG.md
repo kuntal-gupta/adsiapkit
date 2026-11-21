@@ -3,6 +3,12 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-11-21
+
+### Added
+- AdMob **Fall Back To Standard** option for Adaptive and SmartBanner sizes (on by default). When the adaptive banner fails to load, the kit retries straight away with the standard 320x50 banner; if that fails too it waits the usual 30 seconds and tries the adaptive size again. The next banner after a scene change or Remove Ads asks for the adaptive size first.
+- `AdMobProvider.IsAdaptiveSize`, `EffectiveBannerSize` and `ShouldFallBackToStandard` helpers, covered by Editor tests.
+
 ## [1.4.0] - 2026-11-06
 
 ### Added
