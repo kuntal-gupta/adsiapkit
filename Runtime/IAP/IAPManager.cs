@@ -36,6 +36,12 @@ namespace AdsIAPKit
         /// Nothing is granted yet; once approved it arrives as a normal purchase and OnPurchaseSuccess fires.
         /// </summary>
         public static event Action<string> OnPurchaseDeferred;
+        /// <summary>
+        /// A non-consumable the player already owned came back from the store (reinstall, new device or
+        /// Restore Purchases). It has been granted through PurchaseHandler like a purchase, but
+        /// OnPurchaseSuccess does not fire, so the game can skip its "thanks for buying" message.
+        /// </summary>
+        public static event Action<string> OnPurchaseRestored;
 
         /// <summary>Message passed to Purchase callbacks for a deferred purchase.</summary>
         public const string DeferredMessage = "Purchase pending approval";
@@ -63,6 +69,7 @@ namespace AdsIAPKit
             OnPurchaseSuccess = null;
             OnPurchaseFailure = null;
             OnPurchaseDeferred = null;
+            OnPurchaseRestored = null;
             OnRestoreSuccess = null;
             OnRestoreFailed = null;
         }
@@ -230,13 +237,23 @@ namespace AdsIAPKit
             OnPurchaseFailure?.Invoke(id, message);
         }
 
+        // Confirmed orders the store returns at startup or after Restore Purchases. A non-consumable the
+        // device does not know about yet (reinstall, new device) is granted again through PurchaseHandler,
+        // so entitlements such as Remove Ads come back, not just the shop's "Owned" label.
         private static void MarkOrderProductsAsOwned(UnityEngine.Purchasing.Order order)
         {
             var items = order.CartOrdered.Items();
             if (items == null) return;
             foreach (var item in items)
-                if (item.Product.definition.type != UnityEngine.Purchasing.ProductType.Consumable)
-                    MarkOwned(item.Product.definition.id);
+            {
+                if (item.Product.definition.type == UnityEngine.Purchasing.ProductType.Consumable) continue;
+                var id = item.Product.definition.id;
+                if (IsOwnedOnDevice(id)) continue;
+                if (!GrantProduct(id)) continue; // try again on the next launch
+                MarkOwned(id);
+                AdsIAPSettings.Log($"Purchase restored: {id}");
+                OnPurchaseRestored?.Invoke(id);
+            }
         }
 #endif
 
@@ -255,6 +272,8 @@ namespace AdsIAPKit
                 return false;
             }
         }
+
+        private static bool IsOwnedOnDevice(string productId) => PlayerPrefs.GetInt($"IAP_{productId}", 0) == 1;
 
         private static void MarkOwned(string productId)
         {
@@ -293,6 +312,7 @@ namespace AdsIAPKit
                 if (success)
                 {
                     AdsIAPSettings.Log("Restore complete.");
+                    _controller.FetchPurchases(); // delivers the restored orders to OnPurchasesFetched
                     OnRestoreSuccess?.Invoke("restored");
                 }
                 else

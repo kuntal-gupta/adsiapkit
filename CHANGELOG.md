@@ -3,6 +3,15 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] - 2026-11-21
+
+### Fixed
+- Non-consumables restored from the store (reinstall, new device or **Restore Purchases**) are now granted through `IAPManager.PurchaseHandler`, not only marked as owned. Before, the shop showed **Owned** while the game never re-applied the entitlement, so a restored Remove Ads left ads on.
+- **Restore Purchases** fetches purchases again after a successful restore, so restored orders are processed straight away.
+
+### Added
+- `IAPManager.OnPurchaseRestored` event for products granted by a restore. `OnPurchaseSuccess` does not fire for them, so games can skip their purchase message.
+
 ## [1.5.0] - 2026-11-21
 
 ### Added
