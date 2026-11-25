@@ -184,7 +184,9 @@ Static events: `OnAdsInitialized`, `OnInterstitialClosed`, `OnRewardedResult(boo
 | `Instance.GetLocalizedPrice(id)` | Store price string |
 | `Instance.IsAvailable(id)`, `Instance.IsPurchaseInProgress(id)` | Store state for your own UI |
 
-Static events: `OnIAPInitialized`, `OnPurchaseSuccess(id)`, `OnPurchaseFailure(id, message)`, `OnRestoreSuccess`, `OnRestoreFailed`.
+Static events: `OnIAPInitialized`, `OnPurchaseSuccess(id)`, `OnPurchaseFailure(id, message)`, `OnPurchaseDeferred(id)`, `OnPurchaseRestored(id)`, `OnRestoreSuccess`, `OnRestoreFailed`.
+
+`OnPurchaseRestored` fires when a non-consumable the player already owned is granted again (reinstall, new device or Restore Purchases); `OnPurchaseSuccess` does not fire for it. `OnRestoreSuccess` fires after the restored products were granted.
 
 ## Ad network support
 

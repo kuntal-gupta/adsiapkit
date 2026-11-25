@@ -57,6 +57,7 @@ namespace AdsIAPKit
 
 #if UNITY_IAP_ENABLED
         private UnityEngine.Purchasing.StoreController _controller;
+        private bool _restoreAwaitingFetch;
 #endif
 
         // Supports Enter Play Mode without a domain reload.
@@ -169,11 +170,21 @@ namespace AdsIAPKit
         {
             foreach (var order in orders.ConfirmedOrders) MarkOrderProductsAsOwned(order);
             foreach (var order in orders.PendingOrders) OnPurchasePending(order);
+            FinishRestore();
         }
 
         private void OnPurchasesFetchFailed(UnityEngine.Purchasing.PurchasesFetchFailureDescription failure)
         {
             Debug.LogWarning($"[AdsIAPKit] Existing purchases could not be restored: {failure.Message}");
+            FinishRestore();
+        }
+
+        // OnRestoreSuccess fires once the restored orders were granted, so listeners see the new ownership.
+        private void FinishRestore()
+        {
+            if (!_restoreAwaitingFetch) return;
+            _restoreAwaitingFetch = false;
+            OnRestoreSuccess?.Invoke("restored");
         }
 
         private void OnPurchasePending(UnityEngine.Purchasing.PendingOrder order)
@@ -238,22 +249,39 @@ namespace AdsIAPKit
         }
 
         // Confirmed orders the store returns at startup or after Restore Purchases. A non-consumable the
-        // device does not know about yet (reinstall, new device) is granted again through PurchaseHandler,
+        // device has not granted yet (reinstall, new device) is granted again through PurchaseHandler,
         // so entitlements such as Remove Ads come back, not just the shop's "Owned" label.
-        private static void MarkOrderProductsAsOwned(UnityEngine.Purchasing.Order order)
+        private void MarkOrderProductsAsOwned(UnityEngine.Purchasing.Order order)
         {
             var items = order.CartOrdered.Items();
             if (items == null) return;
             foreach (var item in items)
             {
-                if (item.Product.definition.type == UnityEngine.Purchasing.ProductType.Consumable) continue;
                 var id = item.Product.definition.id;
-                if (IsOwnedOnDevice(id)) continue;
+                var type = item.Product.definition.type;
+
+                // Subscription expiry is not tracked, so a confirmed subscription is never granted here:
+                // an expired one would otherwise hand out its reward for good. It keeps the owned flag only.
+                if (type == UnityEngine.Purchasing.ProductType.Subscription) { SetOwnedFlag(id); continue; }
+                if (type != UnityEngine.Purchasing.ProductType.NonConsumable) continue;
+                if (IsGrantedOnDevice(id)) continue;
+
+                // Owned before 1.5.2, which did not record grants: bought ones were granted, but restored ones
+                // were only marked owned. Grant again only rewards that are safe to apply twice.
+                if (IsOwnedOnDevice(id) && !IsSafeToGrantAgain(id)) { MarkOwned(id); continue; }
+
                 if (!GrantProduct(id)) continue; // try again on the next launch
                 MarkOwned(id);
                 AdsIAPSettings.Log($"Purchase restored: {id}");
                 OnPurchaseRestored?.Invoke(id);
             }
+        }
+
+        // Remove Ads and feature unlocks only switch something on, so granting them twice changes nothing.
+        private bool IsSafeToGrantAgain(string productId)
+        {
+            var product = _config?.GetProduct(productId);
+            return product != null && (product.RemovesAds() || product.rewardType == RewardType.Feature);
         }
 #endif
 
@@ -274,10 +302,21 @@ namespace AdsIAPKit
         }
 
         private static bool IsOwnedOnDevice(string productId) => PlayerPrefs.GetInt($"IAP_{productId}", 0) == 1;
+        // Set only once PurchaseHandler granted the product, unlike the owned flag before 1.5.2.
+        private static bool IsGrantedOnDevice(string productId) => PlayerPrefs.GetInt($"IAP_granted_{productId}", 0) == 1;
 
+        private static void SetOwnedFlag(string productId)
+        {
+            if (IsOwnedOnDevice(productId)) return;
+            PlayerPrefs.SetInt($"IAP_{productId}", 1);
+            PlayerPrefs.Save();
+        }
+
+        // Call only after PurchaseHandler returned true.
         private static void MarkOwned(string productId)
         {
             PlayerPrefs.SetInt($"IAP_{productId}", 1);
+            PlayerPrefs.SetInt($"IAP_granted_{productId}", 1);
             PlayerPrefs.Save();
         }
 
@@ -312,8 +351,9 @@ namespace AdsIAPKit
                 if (success)
                 {
                     AdsIAPSettings.Log("Restore complete.");
-                    _controller.FetchPurchases(); // delivers the restored orders to OnPurchasesFetched
-                    OnRestoreSuccess?.Invoke("restored");
+                    // Delivers the restored orders to OnPurchasesFetched, which then fires OnRestoreSuccess.
+                    _restoreAwaitingFetch = true;
+                    _controller.FetchPurchases();
                 }
                 else
                 {

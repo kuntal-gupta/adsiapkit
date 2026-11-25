@@ -74,17 +74,19 @@ namespace AdsIAPKit
 
         private void OnEnable()
         {
-            IAPManager.OnIAPInitialized  += Refresh;
-            IAPManager.OnPurchaseSuccess += OnPurchaseEvent;
-            IAPManager.OnRestoreSuccess  += OnPurchaseEvent;
+            IAPManager.OnIAPInitialized   += Refresh;
+            IAPManager.OnPurchaseSuccess  += OnPurchaseEvent;
+            IAPManager.OnPurchaseRestored += OnPurchaseEvent;
+            IAPManager.OnRestoreSuccess   += OnPurchaseEvent;
             Refresh();
         }
 
         private void OnDisable()
         {
-            IAPManager.OnIAPInitialized  -= Refresh;
-            IAPManager.OnPurchaseSuccess -= OnPurchaseEvent;
-            IAPManager.OnRestoreSuccess  -= OnPurchaseEvent;
+            IAPManager.OnIAPInitialized   -= Refresh;
+            IAPManager.OnPurchaseSuccess  -= OnPurchaseEvent;
+            IAPManager.OnPurchaseRestored -= OnPurchaseEvent;
+            IAPManager.OnRestoreSuccess   -= OnPurchaseEvent;
         }
 
         // Any purchase or restore can change ownership, so refresh on all of them.

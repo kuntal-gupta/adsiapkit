@@ -288,7 +288,9 @@ Fix every error before you build. From code you can run the same check with `IAP
 
 The kit never decides what a purchase gives. You set one **purchase handler** that grants the product and returns `true` once it is saved. Only then does the kit confirm the purchase with the store. If the handler returns `false` or throws, the purchase stays pending and the store delivers it again on the next launch, so a crash can never lose a player's purchase.
 
-Set the handler in `Awake` of an object in your first scene, before IAP initializes:
+The same handler also runs when a Non-Consumable comes back from the store on a reinstall, a new device or **Restore Purchases**, so Remove Ads and unlocks are re-applied. Subscriptions are not granted on restore, because the kit does not track their expiry.
+
+Set the handler in `Awake` of an object in your first scene, before IAP initializes. If it is not set yet, restored products are granted on the next launch:
 
 ```csharp
 using AdsIAPKit;

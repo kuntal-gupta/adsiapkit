@@ -3,6 +3,14 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [1.5.2] - 2026-11-25
+
+### Fixed
+- Players who restored a Remove Ads or feature unlock on 1.5.0 or earlier get it granted on the next launch. Those restores were only marked as owned, and 1.5.1 skipped anything already marked. The kit now records separately that `PurchaseHandler` granted a product. For products owned before this version, it grants again only Remove Ads (including **Also Removes Ads**) and Feature rewards, which are safe to apply twice; other non-consumables are left as they are.
+- Confirmed subscriptions are no longer granted through `PurchaseHandler` at startup or on restore, because the kit does not track expiry and an expired subscription would have given its reward permanently. They keep the owned flag as in 1.5.0.
+- `OnRestoreSuccess` now fires after the restored products were granted, not before, so the shop and game UI see the new ownership.
+- Shop cards refresh on `OnPurchaseRestored`, so a product restored at startup shows **Owned** without reopening the shop.
+
 ## [1.5.1] - 2026-11-21
 
 ### Fixed
