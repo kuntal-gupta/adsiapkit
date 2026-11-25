@@ -202,7 +202,7 @@ namespace AdsIAPKit.Tests
                 "{ \"dependencies\": {}, \"scopedRegistries\": [ { \"name\": \"OpenUPM\", \"url\": \"https://package.openupm.com/\", \"scopes\": [ \"com.other\" ] } ] }");
 
             var changed = Editor.KitManifest.MergeScopedRegistries(manifest,
-                new[] { Editor.KitPackages.OpenUpmGoogle, Editor.KitPackages.AppLovinRegistry });
+                new[] { Editor.KitPackages.OpenUpmGoogle, new Editor.KitRegistry("Example", "https://registry.example.com/", "com.example") });
 
             Assert.IsTrue(changed);
             var registries = (List<object>)manifest["scopedRegistries"];
@@ -242,11 +242,36 @@ namespace AdsIAPKit.Tests
                 Assert.IsTrue(config.enableTestMode);
                 Assert.IsTrue(config.adMob.useTestIds);
                 Assert.IsTrue(config.adMob.adaptiveFallbackToStandard);
+                Assert.IsFalse(config.levelPlay.enableTestSuite);
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(config);
             }
+        }
+
+        // AdsConfig assets store these numbers; changing one silently switches a game's provider or banner size.
+        [Test]
+        public void SavedEnumValues_NeverChange()
+        {
+            Assert.AreEqual(0, (int)AdsProviderType.None);
+            Assert.AreEqual(1, (int)AdsProviderType.AdMob);
+            Assert.AreEqual(3, (int)AdsProviderType.LevelPlay);
+            Assert.AreEqual(0, (int)LevelPlayBannerSizeOption.Banner);
+            Assert.AreEqual(1, (int)LevelPlayBannerSizeOption.MediumRectangle);
+            Assert.AreEqual(2, (int)LevelPlayBannerSizeOption.Adaptive);
+            Assert.AreEqual(3, (int)LevelPlayBannerSizeOption.Large);
+        }
+
+        [Test]
+        public void Mediation_AdMobOffersLevelPlayAndMeta_LevelPlayUsesNetworkManager()
+        {
+            var adapters = Editor.KitPackages.AdaptersFor(AdsProviderType.AdMob);
+            CollectionAssert.AreEqual(
+                new[] { "com.google.ads.mobile.mediation.ironsource", "com.google.ads.mobile.mediation.metaaudiencenetwork" },
+                System.Linq.Enumerable.ToArray(System.Linq.Enumerable.SelectMany(adapters, a => a.PackageIds)));
+            Assert.IsNull(Editor.KitPackages.AdaptersFor(AdsProviderType.LevelPlay));
+            Assert.AreEqual("com.unity.services.levelplay", Editor.KitPackages.ForProvider(AdsProviderType.LevelPlay).Id);
         }
     }
 

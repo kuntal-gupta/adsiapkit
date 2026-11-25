@@ -438,7 +438,8 @@ namespace AdsIAPKit
             _rewardEarned = false;
 #if ADMOB_ENABLED
             // The reward is granted when the ad closes, so the game never resumes mid-ad.
-            _rewardedAd.Show(reward => _rewardEarned = true);
+            // The reward callback can come from the SDK thread; queue it so it is ordered with the close event.
+            _rewardedAd.Show(reward => AdsManager.RunOnMainThread(() => _rewardEarned = true));
 #else
             _rewardedReady = false;
             _rewardEarned = true; // stub: always reward (Editor only, see Initialize)

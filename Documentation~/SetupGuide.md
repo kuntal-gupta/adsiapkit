@@ -51,11 +51,10 @@ Every package row shows its state:
 |---|---|
 | ✓ and a version | Installed and active |
 | ○ and **Install** | Not installed |
-| ! and **Enable …** | Installed, but needs a scripting define (IronSource only) |
 
 Pressing **Install**:
 
-1. Adds the package's scoped registry to `Packages/manifest.json` if it comes from outside the Unity registry (OpenUPM for Google, AppLovin's own registry for MAX). Existing registries are kept, and only missing scopes are added.
+1. Adds the package's scoped registry to `Packages/manifest.json` if it comes from outside the Unity registry (OpenUPM for Google). Existing registries are kept, and only missing scopes are added.
 2. Asks the Package Manager to install the newest version.
 3. Unity recompiles. The kit detects the SDK through version defines and switches from its Editor stub to the real SDK.
 
@@ -65,12 +64,10 @@ You can watch progress at the bottom of the panel and in the Console. If an inst
 |---|---|---|---|
 | In-app purchases | `com.unity.purchasing` 5.0+ | Unity | `UNITY_IAP_ENABLED` |
 | AdMob | `com.google.ads.mobile` | OpenUPM (`com.google`) | `ADMOB_ENABLED` |
-| Unity Ads | `com.unity.ads` 4.0+ | Unity | `UNITY_ADS_ENABLED` |
-| AppLovin MAX | `com.applovin.mediation.ads` | AppLovin + OpenUPM | `APPLOVIN_ENABLED` |
-| IronSource (LevelPlay) | `com.unity.services.levelplay` | Unity | `IRONSOURCE_ENABLED`: press **Enable** after install |
+| LevelPlay (IronSource) | `com.unity.services.levelplay` 9.0+ | Unity | `LEVELPLAY_ENABLED` |
 | iOS ATT prompt | `com.unity.ads.ios-support` | Unity | `ATT_SUPPORT_ENABLED` |
 
-> **IronSource is in preview.** The kit's IronSource provider uses the legacy `IronSource.Agent` API. Recent LevelPlay releases are moving away from it, so check that your LevelPlay version still includes that API before you enable `IRONSOURCE_ENABLED`.
+> **LevelPlay is in preview.** The provider uses the LevelPlay 9 API (`LevelPlay.Init`, `LevelPlayBannerAd`, `LevelPlayInterstitialAd`, `LevelPlayRewardedAd`) and has not yet been tested on a device. LevelPlay needs an ad unit ID per format from the LevelPlay dashboard, as well as the app key.
 
 ---
 
@@ -86,7 +83,7 @@ You can watch progress at the bottom of the panel and in the Console. If an inst
 | Initialize On Start | Starts ads when the first scene loads, with no scene setup |
 | GDPR Consent (UMP) | Shows Google's consent form in the EEA/UK before ads load (AdMob) |
 
-Then open the network's section (for example **🟠 AdMob**), turn it on, and enter your app ID and ad unit IDs for Android and iOS.
+Then open the network's section (**🟠 AdMob** or **🟣 LevelPlay**), turn it on, and enter your app ID (AdMob) or app key (LevelPlay) and the ad unit IDs for Android and iOS.
 
 **AdMob only:** also enter the app IDs in **Assets → Google Mobile Ads → Settings**. Google's SDK reads them from there at build time.
 
@@ -101,24 +98,17 @@ Open **Ads → 🔀 Mediation**. What you see depends on the active network.
 1. Install the Google Mobile Ads SDK (the row above).
 2. Press **Install** next to each network you want. Adapters come from Google on OpenUPM (`com.google.ads.mobile.mediation.<network>`) and include Android and iOS.
 
-   Available: AppLovin, Unity Ads, IronSource, Meta Audience Network, Liftoff Monetize, Mintegral, Pangle, InMobi, DT Exchange, Chartboost, Moloco, myTarget.
-3. In the **AdMob console → Mediation → Create mediation group**, create one group per ad format (banner, interstitial, rewarded). Add your ad units, then add each network as a bidding or waterfall source with the IDs from that network's dashboard.
+   Available: LevelPlay (IronSource) and Meta Audience Network.
+3. In the **AdMob console → Mediation → Create mediation group**, create one group per ad format (banner, interstitial, rewarded). Add your ad units, then add each network as a bidding source with the IDs from that network's dashboard. Meta Audience Network supports bidding only.
 4. Test on a device (section 3.5).
 
-#### AppLovin MAX mediation
+#### LevelPlay mediation
 
-1. Install AppLovin MAX.
-2. Press **Install** next to each network. The kit installs the Android **and** iOS adapter packages (`com.applovin.mediation.adapters.<network>.android` / `.ios`). A row marked **!** has only one of them installed; press **Complete**.
-3. You can also use **Open AppLovin Integration Manager** to manage the same adapters through AppLovin's tool.
-4. In the **MAX dashboard → Mediation → Manage → Ad Units**, turn on each network for each ad unit.
+LevelPlay installs adapters with its own Network Manager. Press **Open LevelPlay Network Manager** and install the **Google AdMob** and **Meta Audience Network** adapters; if your LevelPlay version uses a different menu, the button opens LevelPlay's documentation instead. Then turn the networks on for your ad units in the LevelPlay dashboard.
 
-#### LevelPlay (IronSource) mediation
+#### Meta Audience Network
 
-LevelPlay installs adapters with its own Network Manager. Press **Open LevelPlay Network Manager**; if your LevelPlay version uses a different menu, the button opens LevelPlay's documentation instead. Then turn the networks on in the LevelPlay dashboard.
-
-#### Unity Ads
-
-Unity Ads is a single network with no mediation. To mediate, choose AdMob, AppLovin MAX or LevelPlay as the active network. Unity Ads can still join as an adapter in those.
+Meta no longer serves ads to apps directly: it only bids through a mediation platform. Add it as an adapter under AdMob or LevelPlay as above. On iOS, Meta also reads the App Tracking Transparency result, so keep **ATT** on (section 3.6).
 
 #### Privacy and mediation
 
@@ -174,7 +164,7 @@ Add a hidden debug button to a test build:
 AdsManager.Instance.OpenAdDebugger();
 ```
 
-This opens AdMob's **Ad Inspector** or AppLovin's **Mediation Debugger**. They list each network, whether its adapter loaded, and let you request test ads from each one. For AdMob, register your device as a test device in the AdMob console first.
+This opens AdMob's **Ad Inspector** or the **LevelPlay Test Suite**. They list each network, whether its adapter loaded, and let you request test ads from each one. For AdMob, register your device as a test device in the AdMob console first. For LevelPlay, turn on **Enable Test Suite** in its section, and turn it off again before release.
 
 ### 3.6 iOS App Tracking Transparency
 
@@ -551,7 +541,7 @@ In a build, a missing SDK reports "not initialized", so nothing is ever granted 
 - [ ] **Test Mode** off; real ad unit IDs entered for both platforms
 - [ ] AdMob app IDs set in **Assets → Google Mobile Ads → Settings**
 - [ ] A consent message published in AdMob **Privacy & messaging**, and a Privacy settings button in your game
-- [ ] Mediation groups (AdMob) or network settings (MAX/LevelPlay) set up for every installed adapter
+- [ ] Mediation groups (AdMob) or network settings (LevelPlay) set up for every installed adapter
 - [ ] `app-ads.txt` published on your developer website
 - [ ] The IAP catalog check shows no errors
 - [ ] Every enabled product exists and is active in both stores with the same ID and type
@@ -567,7 +557,7 @@ In a build, a missing SDK reports "not initialized", so nothing is ever granted 
 | Problem | Fix |
 |---|---|
 | **Install** fails with "unable to find package" | The registry is unreachable or blocked by a proxy. Check `scopedRegistries` in `Packages/manifest.json`, then **Window → Package Manager → ⋮ → Refresh** |
-| Package installed but the window still says missing | Wait for the recompile to finish. For IronSource press **Enable IRONSOURCE_ENABLED** |
+| Package installed but the window still says missing | Wait for the recompile to finish. LevelPlay needs version 9.0 or newer |
 | Ads never initialize on a device | AdMob app IDs missing from Google Mobile Ads Settings, or consent not given (check the log with Verbose Logs on) |
 | A mediation network never fills | The adapter is missing (check `OpenAdDebugger()`), or the network is not in a mediation group / not turned on in the dashboard |
 | Shop shows `…` forever on a device | IAP did not initialize: Unity IAP not installed, IAP disabled, or no internet. With **Initialize IAP** off on the shop, call `IAPManager.Instance.InitializeFromSettings()` yourself |

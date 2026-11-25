@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace AdsIAPKit
 {
@@ -22,23 +23,18 @@ namespace AdsIAPKit
         [Header("AdMob")]
         public AdMobSettings adMob = new AdMobSettings();
 
-        [Header("Unity Ads")]
-        public UnityAdsSettings unityAds = new UnityAdsSettings();
-
-        [Header("IronSource")]
-        public IronSourceSettings ironSource = new IronSourceSettings();
-
-        [Header("AppLovin MAX")]
-        public AppLovinSettings appLovin = new AppLovinSettings();
+        [Header("LevelPlay")]
+        [FormerlySerializedAs("ironSource")]
+        public LevelPlaySettings levelPlay = new LevelPlaySettings();
     }
 
+    // The numbers are stored in AdsConfig assets, so they never change. 2 (Unity Ads) and 4 (AppLovin MAX)
+    // were removed in 2.0.0; a config that still holds one of them loads as no provider.
     public enum AdsProviderType
     {
-        None,
-        AdMob,
-        UnityAds,
-        IronSource,
-        AppLovin
+        None      = 0,
+        AdMob     = 1,
+        LevelPlay = 3
     }
 
     // ─── AdMob ────────────────────────────────────────────────────────────────
@@ -82,38 +78,9 @@ namespace AdsIAPKit
     public enum AdMobBannerPosition { Top, Bottom, TopLeft, TopRight, BottomLeft, BottomRight, Center }
     public enum AdMobBannerSize    { Banner, MediumRectangle, IABBanner, Leaderboard, SmartBanner, Adaptive }
 
-    // ─── Unity Ads ────────────────────────────────────────────────────────────
+    // ─── LevelPlay (formerly IronSource) ──────────────────────────────────────
     [Serializable]
-    public class UnityAdsSettings
-    {
-        public bool enabled = false;
-
-        [Header("Game IDs")]
-        public string androidGameId = "YOUR_ANDROID_GAME_ID";
-        public string iosGameId     = "YOUR_IOS_GAME_ID";
-
-        [Header("Banner")]
-        public bool   bannerEnabled  = true;
-        public string bannerAdUnitId = "Banner_Android";
-        public string iosBannerAdUnitId = "Banner_iOS";
-        public UnityAdsBannerPosition bannerPosition = UnityAdsBannerPosition.BottomCenter;
-
-        [Header("Interstitial")]
-        public bool   interstitialEnabled     = true;
-        public string interstitialAdUnitId    = "Interstitial_Android";
-        public string iosInterstitialAdUnitId = "Interstitial_iOS";
-
-        [Header("Rewarded")]
-        public bool   rewardedEnabled     = true;
-        public string rewardedAdUnitId    = "Rewarded_Android";
-        public string iosRewardedAdUnitId = "Rewarded_iOS";
-    }
-
-    public enum UnityAdsBannerPosition { TopCenter, TopLeft, TopRight, BottomCenter, BottomLeft, BottomRight, Center }
-
-    // ─── IronSource ───────────────────────────────────────────────────────────
-    [Serializable]
-    public class IronSourceSettings
+    public class LevelPlaySettings
     {
         public bool enabled = false;
 
@@ -121,55 +88,32 @@ namespace AdsIAPKit
         public string androidAppKey = "YOUR_ANDROID_APP_KEY";
         public string iosAppKey     = "YOUR_IOS_APP_KEY";
 
-        [Header("Ad Units")]
-        public bool bannerEnabled       = true;
-        public bool interstitialEnabled = true;
-        public bool rewardedEnabled     = true;
-        public bool offerwallEnabled    = false;
-
         [Header("Banner")]
-        public IronSourceBannerPosition bannerPosition = IronSourceBannerPosition.Bottom;
-        public IronSourceBannerSize     bannerSize     = IronSourceBannerSize.Banner;
+        public bool   bannerEnabled   = true;
+        public string androidBannerId = "YOUR_ANDROID_BANNER_AD_UNIT_ID";
+        public string iosBannerId     = "YOUR_IOS_BANNER_AD_UNIT_ID";
+        public LevelPlayBannerAnchor     bannerPosition = LevelPlayBannerAnchor.Bottom;
+        public LevelPlayBannerSizeOption bannerSize   = LevelPlayBannerSizeOption.Banner;
 
-        [Header("Segments & Impressions")]
+        [Header("Interstitial")]
+        public bool   interstitialEnabled   = true;
+        public string androidInterstitialId = "YOUR_ANDROID_INTERSTITIAL_AD_UNIT_ID";
+        public string iosInterstitialId     = "YOUR_IOS_INTERSTITIAL_AD_UNIT_ID";
+
+        [Header("Rewarded")]
+        public bool   rewardedEnabled   = true;
+        public string androidRewardedId = "YOUR_ANDROID_REWARDED_AD_UNIT_ID";
+        public string iosRewardedId     = "YOUR_IOS_REWARDED_AD_UNIT_ID";
+
+        [Header("Revenue & Testing")]
+        [Tooltip("Raise AdsManager.OnImpressionRevenue for every LevelPlay impression.")]
         public bool useImpressionLevelRevenue = true;
+        [Tooltip("Enable the LevelPlay Test Suite; open it with AdsManager.OpenAdDebugger(). Turn off for release.")]
+        public bool enableTestSuite = false;
     }
 
-    public enum IronSourceBannerPosition { Top, Bottom }
-    public enum IronSourceBannerSize    { Banner, Rectangle, Smart }
-
-    // ─── AppLovin MAX ─────────────────────────────────────────────────────────
-    [Serializable]
-    public class AppLovinSettings
-    {
-        public bool enabled = false;
-
-        [Header("SDK Key")]
-        public string sdkKey = "YOUR_APPLOVIN_SDK_KEY";
-
-        [Header("Ad Unit IDs — Android")]
-        public string androidBannerId       = "ANDROID_BANNER_AD_UNIT_ID";
-        public string androidInterstitialId = "ANDROID_INTER_AD_UNIT_ID";
-        public string androidRewardedId     = "ANDROID_REWARDED_AD_UNIT_ID";
-        public string androidMrecId         = "ANDROID_MREC_AD_UNIT_ID";
-
-        [Header("Ad Unit IDs — iOS")]
-        public string iosBannerId       = "IOS_BANNER_AD_UNIT_ID";
-        public string iosInterstitialId = "IOS_INTER_AD_UNIT_ID";
-        public string iosRewardedId     = "IOS_REWARDED_AD_UNIT_ID";
-        public string iosMrecId         = "IOS_MREC_AD_UNIT_ID";
-
-        [Header("Features")]
-        public bool bannerEnabled       = true;
-        public bool interstitialEnabled = true;
-        public bool rewardedEnabled     = true;
-        public bool mrecEnabled         = false;
-        public bool enableCreativeDebugger = false;
-        public bool enableMediationDebugger = false;
-
-        [Header("Banner")]
-        public AppLovinBannerPosition bannerPosition = AppLovinBannerPosition.BottomCenter;
-    }
-
-    public enum AppLovinBannerPosition { TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight, Centered }
+    // Named apart from the SDK's own LevelPlayBannerPosition and LevelPlayAdSize types.
+    public enum LevelPlayBannerAnchor { Top, Bottom }
+    // 0 and 1 keep the meaning of the old IronSource values (Banner, Rectangle); Smart (2) became Adaptive.
+    public enum LevelPlayBannerSizeOption { Banner = 0, MediumRectangle = 1, Adaptive = 2, Large = 3 }
 }

@@ -2,8 +2,8 @@
 
 One API for mobile ads and in-app purchases in Unity. Pick an ad network in a setup window, call `AdsManager` and `IAPManager` from your game, and switch networks later without touching game code.
 
-- **Ads:** banner, interstitial and rewarded through AdMob, Unity Ads, IronSource or AppLovin MAX
-- **Mediation:** install AdMob and AppLovin MAX adapters for 12 networks from the setup window
+- **Ads:** banner, interstitial and rewarded through AdMob or Unity LevelPlay (formerly IronSource)
+- **Mediation:** AdMob, LevelPlay and Meta Audience Network bid against each other through either provider
 - **IAP:** Unity IAP 5 with a product catalog editor (templates, store ID checks, CSV), restore, localized prices and purchases that are never lost
 - **Shop UI:** uGUI components that build a shop from the catalog, with prices, badges, owned state and restore
 - **One-click setup:** the setup window shows the SDKs your settings need and installs them, scoped registries included
@@ -38,20 +38,18 @@ The `#v1.3.3` tag pins a version. Use `#main` to follow the latest changes.
 
 ### 2. Install the SDKs you need
 
-Pick an ad network and turn on IAP in the setup window: it lists the packages your settings need with an **Install** button for each, and adds the scoped registries (OpenUPM, AppLovin) to your manifest. The kit turns each integration on automatically when it finds the matching package:
+Pick an ad network and turn on IAP in the setup window: it lists the packages your settings need with an **Install** button for each, and adds the OpenUPM scoped registry to your manifest. The kit turns each integration on automatically when it finds the matching package:
 
 | Feature | Package | Enables |
 |---|---|---|
 | In-app purchases | `com.unity.purchasing` 5.0+ | `UNITY_IAP_ENABLED` |
 | AdMob | `com.google.ads.mobile` (Google Mobile Ads, UPM/OpenUPM) | `ADMOB_ENABLED` |
-| Unity Ads | `com.unity.ads` 4.0+ | `UNITY_ADS_ENABLED` |
-| AppLovin MAX | `com.applovin.mediation.ads` | `APPLOVIN_ENABLED` |
-| IronSource | `com.unity.services.levelplay`, then **Enable IRONSOURCE_ENABLED** in the window (preview, legacy API) | `IRONSOURCE_ENABLED` |
+| LevelPlay | `com.unity.services.levelplay` 9.0+ | `LEVELPLAY_ENABLED` |
 | iOS ATT prompt | `com.unity.ads.ios-support` | `ATT_SUPPORT_ENABLED` |
 
 > AdMob must be installed as a **UPM package**. The old `.unitypackage` import does not set `ADMOB_ENABLED`.
 
-**Mediation:** with AdMob or AppLovin MAX active, **Ads → Mediation** installs adapters for AppLovin, Unity Ads, IronSource, Meta, Liftoff, Mintegral, Pangle, InMobi, DT Exchange, Chartboost, Moloco and myTarget. Then add the networks in the network's dashboard; no code changes. See the [guide](Documentation~/SetupGuide.md#32-mediation).
+**Mediation:** with AdMob active, **Ads → Mediation** installs the LevelPlay (IronSource) and Meta Audience Network adapters. With LevelPlay active, install the AdMob and Meta adapters from LevelPlay's Network Manager. Then add the networks in the provider's dashboard; no code changes. Meta Audience Network serves bids only through mediation, so it is never an active provider of its own. See the [guide](Documentation~/SetupGuide.md#32-mediation).
 
 ### 3. Configure
 
@@ -168,7 +166,7 @@ With **ATT** on and `com.unity.ads.ios-support` installed, the kit requests trac
 | `IsInterstitialReady()`, `ShowInterstitial(Action onClosed)` | Interstitial |
 | `IsRewardedReady()`, `ShowRewarded(Action<bool> onResult)` | Rewarded; `true` means the user earned the reward |
 | `IsPrivacyOptionsRequired`, `ShowPrivacyOptions(Action onClosed)` | UMP privacy options (AdMob) |
-| `OpenAdDebugger()` | AdMob Ad Inspector or AppLovin Mediation Debugger, for test builds |
+| `OpenAdDebugger()` | AdMob Ad Inspector or LevelPlay Test Suite (needs **Enable Test Suite**), for test builds |
 
 Static events: `OnAdsInitialized`, `OnInterstitialClosed`, `OnRewardedResult(bool)`, `OnImpressionRevenue(double)`, `OnBannerLayoutChanged`. Impression revenue is in the ad network's currency, in whole units (not micros).
 
@@ -193,11 +191,10 @@ Static events: `OnIAPInitialized`, `OnPurchaseSuccess(id)`, `OnPurchaseFailure(i
 | Network | Banner | Interstitial | Rewarded | Consent (UMP) | Status |
 |---|---|---|---|---|---|
 | AdMob | ✓ | ✓ | ✓ | ✓ | Stable |
-| Unity Ads | ✓ | ✓ | ✓ | – | Preview |
-| AppLovin MAX | ✓ | ✓ | ✓ | – | Preview |
-| IronSource | ✓ | ✓ | ✓ | – | Preview (legacy `IronSource.Agent` API) |
+| LevelPlay | ✓ | ✓ | ✓ | – | Preview (LevelPlay 9 API) |
+| Meta Audience Network | through AdMob or LevelPlay mediation | | | | |
 
-**Preview** networks have not yet been tested against the current SDK releases. Test them in your project before shipping.
+**Preview** networks have not yet been tested against the current SDK releases. Test them in your project before shipping. Unity Ads and AppLovin MAX were removed as providers in 2.0.0; see the [changelog](CHANGELOG.md) to migrate.
 
 ## Testing in the Editor
 

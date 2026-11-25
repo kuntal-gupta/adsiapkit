@@ -11,10 +11,8 @@ namespace AdsIAPKit.Editor
         private AdsConfig _cfg;
 
         // Foldout states
-        private bool _admobFold    = true;
-        private bool _unityFold    = false;
-        private bool _ironFold     = false;
-        private bool _appLovinFold = false;
+        private bool _admobFold     = true;
+        private bool _levelPlayFold = false;
         private bool _mediationFold = true;
 
         private Vector2 _scroll;
@@ -42,11 +40,7 @@ namespace AdsIAPKit.Editor
 
             DrawAdMobSection();
             DrawSeparator();
-            DrawUnityAdsSection();
-            DrawSeparator();
-            DrawIronSourceSection();
-            DrawSeparator();
-            DrawAppLovinSection();
+            DrawLevelPlaySection();
 
             GUILayout.Space(20);
             EditorGUILayout.EndScrollView();
@@ -105,27 +99,16 @@ namespace AdsIAPKit.Editor
                             "https://developers.google.com/admob/unity/mediate");
                         break;
 
-                    case AdsProviderType.AppLovin:
-                        DrawAdapterMediation(package,
-                            "Install an adapter (Android + iOS) for each network, then turn the network on for your ad units " +
-                            "in the MAX dashboard. No code changes are needed.",
-                            "https://developers.applovin.com/en/max/unity/preparing-mediated-networks");
-                        if (KitPackageInstaller.IsInstalled(package.Id) &&
-                            GUILayout.Button("Open AppLovin Integration Manager", GUILayout.Height(22)))
-                            OpenMenuOrDocs(package.DocsUrl, "AppLovin/Integration Manager");
-                        break;
-
-                    case AdsProviderType.IronSource:
-                        GUILayout.Label("LevelPlay manages its own adapters. Open its Network Manager to install them, then " +
-                                        "turn the networks on in the LevelPlay dashboard.", EditorStyles.wordWrappedMiniLabel);
+                    case AdsProviderType.LevelPlay:
+                        GUILayout.Label("LevelPlay installs its own adapters. Open its Network Manager and install the " +
+                                        "Google AdMob and Meta Audience Network adapters, then turn the networks on for your " +
+                                        "ad units in the LevelPlay dashboard. No code changes are needed.",
+                                        EditorStyles.wordWrappedMiniLabel);
                         if (GUILayout.Button("Open LevelPlay Network Manager", GUILayout.Height(22)))
                             OpenMenuOrDocs(package.DocsUrl, "Ads Mediation/Network Manager", "LevelPlay/Network Manager",
                                            "IronSource/Network Manager");
-                        break;
-
-                    case AdsProviderType.UnityAds:
-                        GUILayout.Label("Unity Ads is a single network. To mediate several networks, use AdMob, AppLovin MAX " +
-                                        "or LevelPlay as the active provider.", EditorStyles.wordWrappedMiniLabel);
+                        GUILayout.Label("Check which networks load on a device with AdsManager.Instance.OpenAdDebugger() " +
+                                        "(turn on Enable Test Suite first).", EditorStyles.wordWrappedMiniLabel);
                         break;
                 }
             }
@@ -271,79 +254,21 @@ namespace AdsIAPKit.Editor
             EditorGUI.indentLevel--;
         }
 
-        // ── Unity Ads ──────────────────────────────────────────────────────────
-        private void DrawUnityAdsSection()
+        // ── LevelPlay ──────────────────────────────────────────────────────────
+        private void DrawLevelPlaySection()
         {
-            var cfg = _cfg.unityAds;
-            _unityFold = EditorGUILayout.Foldout(_unityFold, "", true);
+            var cfg = _cfg.levelPlay;
+            _levelPlayFold = EditorGUILayout.Foldout(_levelPlayFold, "", true);
             var lastRect = GUILayoutUtility.GetLastRect();
             GUI.Label(new Rect(lastRect.x + 14, lastRect.y, 320, lastRect.height),
-                      $"⬛  Unity Ads{(_cfg.activeProvider == AdsProviderType.UnityAds ? " ★ ACTIVE" : "")}", HeaderStyle());
+                      $"🟣  LevelPlay (IronSource){(_cfg.activeProvider == AdsProviderType.LevelPlay ? " ★ ACTIVE" : "")}", HeaderStyle());
 
-            if (!_unityFold) return;
+            if (!_levelPlayFold) return;
 
             EditorGUI.indentLevel++;
             EditorGUI.BeginChangeCheck();
 
-            cfg.enabled = EditorGUILayout.Toggle("Enable Unity Ads", cfg.enabled);
-            if (cfg.enabled)
-            {
-                GUILayout.Label("Game IDs", SectionStyle());
-                cfg.androidGameId = EditorGUILayout.TextField("Android Game ID", cfg.androidGameId);
-                cfg.iosGameId     = EditorGUILayout.TextField("iOS Game ID",     cfg.iosGameId);
-
-                DrawSeparator(0.5f, 4f);
-                GUILayout.Label("Banner", SectionStyle());
-                cfg.bannerEnabled = EditorGUILayout.Toggle("Banner Enabled", cfg.bannerEnabled);
-                if (cfg.bannerEnabled)
-                {
-                    cfg.bannerAdUnitId    = EditorGUILayout.TextField("Android Ad Unit", cfg.bannerAdUnitId);
-                    cfg.iosBannerAdUnitId = EditorGUILayout.TextField("iOS Ad Unit",     cfg.iosBannerAdUnitId);
-                    cfg.bannerPosition    = (UnityAdsBannerPosition)EditorGUILayout.EnumPopup("Position", cfg.bannerPosition);
-                }
-
-                DrawSeparator(0.5f, 4f);
-                GUILayout.Label("Interstitial", SectionStyle());
-                cfg.interstitialEnabled     = EditorGUILayout.Toggle("Interstitial Enabled", cfg.interstitialEnabled);
-                cfg.interstitialAdUnitId    = EditorGUILayout.TextField("Android Ad Unit",   cfg.interstitialAdUnitId);
-                cfg.iosInterstitialAdUnitId = EditorGUILayout.TextField("iOS Ad Unit",       cfg.iosInterstitialAdUnitId);
-
-                DrawSeparator(0.5f, 4f);
-                GUILayout.Label("Rewarded", SectionStyle());
-                cfg.rewardedEnabled     = EditorGUILayout.Toggle("Rewarded Enabled", cfg.rewardedEnabled);
-                cfg.rewardedAdUnitId    = EditorGUILayout.TextField("Android Ad Unit", cfg.rewardedAdUnitId);
-                cfg.iosRewardedAdUnitId = EditorGUILayout.TextField("iOS Ad Unit",     cfg.iosRewardedAdUnitId);
-
-                if (_cfg.activeProvider != AdsProviderType.UnityAds)
-                {
-                    GUILayout.Space(4);
-                    if (GUILayout.Button("Set as Active Provider", GUILayout.Height(24)))
-                    {
-                        _cfg.activeProvider = AdsProviderType.UnityAds;
-                        MarkDirty();
-                    }
-                }
-            }
-
-            if (EditorGUI.EndChangeCheck()) MarkDirty();
-            EditorGUI.indentLevel--;
-        }
-
-        // ── IronSource ─────────────────────────────────────────────────────────
-        private void DrawIronSourceSection()
-        {
-            var cfg = _cfg.ironSource;
-            _ironFold = EditorGUILayout.Foldout(_ironFold, "", true);
-            var lastRect = GUILayoutUtility.GetLastRect();
-            GUI.Label(new Rect(lastRect.x + 14, lastRect.y, 320, lastRect.height),
-                      $"🟣  IronSource (LevelPlay){(_cfg.activeProvider == AdsProviderType.IronSource ? " ★ ACTIVE" : "")}", HeaderStyle());
-
-            if (!_ironFold) return;
-
-            EditorGUI.indentLevel++;
-            EditorGUI.BeginChangeCheck();
-
-            cfg.enabled = EditorGUILayout.Toggle("Enable IronSource", cfg.enabled);
+            cfg.enabled = EditorGUILayout.Toggle("Enable LevelPlay", cfg.enabled);
             if (cfg.enabled)
             {
                 GUILayout.Label("App Keys", SectionStyle());
@@ -351,91 +276,50 @@ namespace AdsIAPKit.Editor
                 cfg.iosAppKey     = EditorGUILayout.TextField("iOS App Key",     cfg.iosAppKey);
 
                 DrawSeparator(0.5f, 4f);
-                GUILayout.Label("Ad Units", SectionStyle());
-                cfg.bannerEnabled       = EditorGUILayout.Toggle("Banner",             cfg.bannerEnabled);
-                cfg.interstitialEnabled = EditorGUILayout.Toggle("Interstitial",       cfg.interstitialEnabled);
-                cfg.rewardedEnabled     = EditorGUILayout.Toggle("Rewarded Video",     cfg.rewardedEnabled);
-                cfg.offerwallEnabled    = EditorGUILayout.Toggle("Offerwall",          cfg.offerwallEnabled);
-
+                GUILayout.Label("Banner", SectionStyle());
+                cfg.bannerEnabled = EditorGUILayout.Toggle("Banner Enabled", cfg.bannerEnabled);
                 if (cfg.bannerEnabled)
                 {
-                    DrawSeparator(0.5f, 4f);
-                    GUILayout.Label("Banner Settings", SectionStyle());
-                    cfg.bannerPosition = (IronSourceBannerPosition)EditorGUILayout.EnumPopup("Position", cfg.bannerPosition);
-                    cfg.bannerSize     = (IronSourceBannerSize)EditorGUILayout.EnumPopup("Size", cfg.bannerSize);
+                    cfg.androidBannerId = EditorGUILayout.TextField("Android Ad Unit", cfg.androidBannerId);
+                    cfg.iosBannerId     = EditorGUILayout.TextField("iOS Ad Unit",     cfg.iosBannerId);
+                    cfg.bannerPosition  = (LevelPlayBannerAnchor)EditorGUILayout.EnumPopup("Position", cfg.bannerPosition);
+                    cfg.bannerSize      = (LevelPlayBannerSizeOption)EditorGUILayout.EnumPopup("Size", cfg.bannerSize);
+                }
+
+                DrawSeparator(0.5f, 4f);
+                GUILayout.Label("Interstitial", SectionStyle());
+                cfg.interstitialEnabled = EditorGUILayout.Toggle("Interstitial Enabled", cfg.interstitialEnabled);
+                if (cfg.interstitialEnabled)
+                {
+                    cfg.androidInterstitialId = EditorGUILayout.TextField("Android Ad Unit", cfg.androidInterstitialId);
+                    cfg.iosInterstitialId     = EditorGUILayout.TextField("iOS Ad Unit",     cfg.iosInterstitialId);
+                }
+
+                DrawSeparator(0.5f, 4f);
+                GUILayout.Label("Rewarded", SectionStyle());
+                cfg.rewardedEnabled = EditorGUILayout.Toggle("Rewarded Enabled", cfg.rewardedEnabled);
+                if (cfg.rewardedEnabled)
+                {
+                    cfg.androidRewardedId = EditorGUILayout.TextField("Android Ad Unit", cfg.androidRewardedId);
+                    cfg.iosRewardedId     = EditorGUILayout.TextField("iOS Ad Unit",     cfg.iosRewardedId);
                 }
 
                 DrawSeparator(0.5f, 4f);
                 cfg.useImpressionLevelRevenue = EditorGUILayout.Toggle(
-                    new GUIContent("Impression Level Revenue", "Fire ILRD events for each impression"), cfg.useImpressionLevelRevenue);
+                    new GUIContent("Impression Level Revenue", "Raise AdsManager.OnImpressionRevenue for each impression"),
+                    cfg.useImpressionLevelRevenue);
+                cfg.enableTestSuite = EditorGUILayout.Toggle(
+                    new GUIContent("Enable Test Suite", "Lets AdsManager.OpenAdDebugger() open the LevelPlay Test Suite. Turn off for release."),
+                    cfg.enableTestSuite);
+                if (cfg.enableTestSuite)
+                    EditorGUILayout.HelpBox("Test Suite is on. Turn it off before publishing.", MessageType.Warning);
 
-                if (_cfg.activeProvider != AdsProviderType.IronSource)
+                if (_cfg.activeProvider != AdsProviderType.LevelPlay)
                 {
                     GUILayout.Space(4);
                     if (GUILayout.Button("Set as Active Provider", GUILayout.Height(24)))
                     {
-                        _cfg.activeProvider = AdsProviderType.IronSource;
-                        MarkDirty();
-                    }
-                }
-            }
-
-            if (EditorGUI.EndChangeCheck()) MarkDirty();
-            EditorGUI.indentLevel--;
-        }
-
-        // ── AppLovin ───────────────────────────────────────────────────────────
-        private void DrawAppLovinSection()
-        {
-            var cfg = _cfg.appLovin;
-            _appLovinFold = EditorGUILayout.Foldout(_appLovinFold, "", true);
-            var lastRect  = GUILayoutUtility.GetLastRect();
-            GUI.Label(new Rect(lastRect.x + 14, lastRect.y, 320, lastRect.height),
-                      $"🔵  AppLovin MAX{(_cfg.activeProvider == AdsProviderType.AppLovin ? " ★ ACTIVE" : "")}", HeaderStyle());
-
-            if (!_appLovinFold) return;
-
-            EditorGUI.indentLevel++;
-            EditorGUI.BeginChangeCheck();
-
-            cfg.enabled = EditorGUILayout.Toggle("Enable AppLovin MAX", cfg.enabled);
-            if (cfg.enabled)
-            {
-                GUILayout.Label("SDK Key", SectionStyle());
-                cfg.sdkKey = EditorGUILayout.TextField("SDK Key", cfg.sdkKey);
-
-                DrawSeparator(0.5f, 4f);
-                GUILayout.Label("Android Ad Unit IDs", SectionStyle());
-                cfg.bannerEnabled       = EditorGUILayout.Toggle("Banner", cfg.bannerEnabled);
-                if (cfg.bannerEnabled)  cfg.androidBannerId       = EditorGUILayout.TextField("  Banner ID",       cfg.androidBannerId);
-                cfg.interstitialEnabled = EditorGUILayout.Toggle("Interstitial", cfg.interstitialEnabled);
-                if (cfg.interstitialEnabled) cfg.androidInterstitialId = EditorGUILayout.TextField("  Interstitial ID", cfg.androidInterstitialId);
-                cfg.rewardedEnabled     = EditorGUILayout.Toggle("Rewarded", cfg.rewardedEnabled);
-                if (cfg.rewardedEnabled) cfg.androidRewardedId    = EditorGUILayout.TextField("  Rewarded ID",     cfg.androidRewardedId);
-                cfg.mrecEnabled         = EditorGUILayout.Toggle("MREC Banner", cfg.mrecEnabled);
-                if (cfg.mrecEnabled)     cfg.androidMrecId        = EditorGUILayout.TextField("  MREC ID",         cfg.androidMrecId);
-
-                DrawSeparator(0.5f, 4f);
-                GUILayout.Label("iOS Ad Unit IDs", SectionStyle());
-                if (cfg.bannerEnabled)        cfg.iosBannerId       = EditorGUILayout.TextField("  Banner ID",       cfg.iosBannerId);
-                if (cfg.interstitialEnabled)  cfg.iosInterstitialId = EditorGUILayout.TextField("  Interstitial ID", cfg.iosInterstitialId);
-                if (cfg.rewardedEnabled)      cfg.iosRewardedId     = EditorGUILayout.TextField("  Rewarded ID",     cfg.iosRewardedId);
-                if (cfg.mrecEnabled)          cfg.iosMrecId         = EditorGUILayout.TextField("  MREC ID",         cfg.iosMrecId);
-
-                DrawSeparator(0.5f, 4f);
-                if (cfg.bannerEnabled)
-                    cfg.bannerPosition = (AppLovinBannerPosition)EditorGUILayout.EnumPopup("Banner Position", cfg.bannerPosition);
-
-                GUILayout.Label("Debug", SectionStyle());
-                cfg.enableCreativeDebugger  = EditorGUILayout.Toggle("Creative Debugger",  cfg.enableCreativeDebugger);
-                cfg.enableMediationDebugger = EditorGUILayout.Toggle("Mediation Debugger", cfg.enableMediationDebugger);
-
-                if (_cfg.activeProvider != AdsProviderType.AppLovin)
-                {
-                    GUILayout.Space(4);
-                    if (GUILayout.Button("Set as Active Provider", GUILayout.Height(24)))
-                    {
-                        _cfg.activeProvider = AdsProviderType.AppLovin;
+                        _cfg.activeProvider = AdsProviderType.LevelPlay;
                         MarkDirty();
                     }
                 }

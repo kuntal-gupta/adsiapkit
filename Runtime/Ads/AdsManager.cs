@@ -6,13 +6,13 @@ using UnityEngine.SceneManagement;
 
 namespace AdsIAPKit
 {
+    /// <summary>The screen edge a banner is anchored to.</summary>
+    public enum BannerEdge { Bottom, Top, None }
+
     /// <summary>
     /// Drop this prefab in your first scene, or call AdsManager.Instance from anywhere.
     /// It auto-picks the provider that is active in AdsConfig.
     /// </summary>
-    /// <summary>The screen edge a banner is anchored to.</summary>
-    public enum BannerEdge { Bottom, Top, None }
-
     public class AdsManager : MonoBehaviour
     {
         // ── Singleton ──────────────────────────────────────────────────────────
@@ -222,26 +222,8 @@ namespace AdsIAPKit
                         case AdMobBannerPosition.Center:   return BannerEdge.None;
                         default:                           return BannerEdge.Bottom;
                     }
-                case AdsProviderType.UnityAds:
-                    switch (config.unityAds.bannerPosition)
-                    {
-                        case UnityAdsBannerPosition.TopCenter:
-                        case UnityAdsBannerPosition.TopLeft:
-                        case UnityAdsBannerPosition.TopRight: return BannerEdge.Top;
-                        case UnityAdsBannerPosition.Center:   return BannerEdge.None;
-                        default:                              return BannerEdge.Bottom;
-                    }
-                case AdsProviderType.IronSource:
-                    return config.ironSource.bannerPosition == IronSourceBannerPosition.Top ? BannerEdge.Top : BannerEdge.Bottom;
-                case AdsProviderType.AppLovin:
-                    switch (config.appLovin.bannerPosition)
-                    {
-                        case AppLovinBannerPosition.TopLeft:
-                        case AppLovinBannerPosition.TopCenter:
-                        case AppLovinBannerPosition.TopRight: return BannerEdge.Top;
-                        case AppLovinBannerPosition.Centered: return BannerEdge.None;
-                        default:                              return BannerEdge.Bottom;
-                    }
+                case AdsProviderType.LevelPlay:
+                    return config.levelPlay.bannerPosition == LevelPlayBannerAnchor.Top ? BannerEdge.Top : BannerEdge.Bottom;
                 default:
                     return BannerEdge.Bottom;
             }
@@ -294,9 +276,7 @@ namespace AdsIAPKit
             return type switch
             {
                 AdsProviderType.AdMob      => new AdMobProvider(),
-                AdsProviderType.UnityAds   => new UnityAdsProvider(),
-                AdsProviderType.IronSource => new IronSourceProvider(),
-                AdsProviderType.AppLovin   => new AppLovinProvider(),
+                AdsProviderType.LevelPlay  => new LevelPlayProvider(),
                 _                          => null
             };
         }
@@ -380,14 +360,14 @@ namespace AdsIAPKit
         // ── Debugging ──────────────────────────────────────────────────────────
         /// <summary>
         /// Opens the network's mediation debugger on a device: the Ad Inspector for AdMob or the
-        /// Mediation Debugger for AppLovin MAX. Use it in test builds to check that adapters load.
+        /// Test Suite for LevelPlay (turn on Enable Test Suite first). Use it in test builds to check that adapters load.
         /// </summary>
         public void OpenAdDebugger()
         {
             switch (_provider)
             {
                 case AdMobProvider adMob:       adMob.OpenAdInspector(); break;
-                case AppLovinProvider appLovin: appLovin.ShowMediationDebugger(); break;
+                case LevelPlayProvider levelPlay: levelPlay.LaunchTestSuite(); break;
                 default: AdsIAPSettings.Log($"{ProviderName} has no ad debugger."); break;
             }
         }

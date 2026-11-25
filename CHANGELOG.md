@@ -3,6 +3,30 @@
 All notable changes to this package are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the package uses [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] - 2026-11-25
+
+The kit now supports two ad providers, AdMob and Unity LevelPlay, with Meta Audience Network through mediation in either.
+
+### Removed (breaking)
+- **Unity Ads** and **AppLovin MAX** as ad providers: `UnityAdsProvider`, `AppLovinProvider`, `UnityAdsSettings`, `AppLovinSettings`, their enums and `AdsConfig.unityAds` / `AdsConfig.appLovin`. A config set to one of them loads as no provider. Switch it to AdMob or LevelPlay in the setup window. Both of those can still mediate Unity Ads and AppLovin as networks.
+- AppLovin's scoped registry and adapter list in the setup window.
+- AdMob mediation adapters other than LevelPlay (IronSource) and Meta Audience Network.
+- The manual `IRONSOURCE_ENABLED` define. LevelPlay is now detected from its package, like the other SDKs.
+
+### Changed (breaking)
+- `AdsProviderType.IronSource` is now `AdsProviderType.LevelPlay`, with the same stored value (3), so a saved config keeps its provider.
+- `IronSourceSettings` is now `LevelPlaySettings` and `AdsConfig.ironSource` is now `AdsConfig.levelPlay`. Saved app keys and options carry over. `IronSourceBannerPosition` and `IronSourceBannerSize` are now `LevelPlayBannerAnchor` and `LevelPlayBannerSizeOption`, named apart from the SDK's own types; the stored values keep their meaning (Smart is now Adaptive).
+- The LevelPlay provider is rewritten on the LevelPlay 9 API (`com.unity.services.levelplay` 9.0 or newer) and replaces the legacy `IronSource.Agent` calls. LevelPlay needs an ad unit ID per format: enter them in the new banner, interstitial and rewarded fields.
+
+### Fixed
+- LevelPlay banners are now loaded and only reported to Banner Safe Area once they are on screen. Before, a banner was never loaded but its space was still reserved.
+- LevelPlay interstitials and rewarded ads always call back, including when the ad fails to show or the player closes it without earning the reward. The reward is reported after the ad closes, and it is still counted when the SDK sends it after the close. Interstitials are loaded after initialization and after every show, and failed loads are retried after 30 seconds.
+- AdMob's reward callback is moved to the main thread, so it is ordered with the close event.
+
+### Added
+- `LevelPlaySettings.enableTestSuite`: `AdsManager.OpenAdDebugger()` opens the LevelPlay Test Suite.
+- LevelPlay impression-level revenue is raised through `AdsManager.OnImpressionRevenue` when **Impression Level Revenue** is on.
+
 ## [1.5.2] - 2026-11-25
 
 ### Fixed

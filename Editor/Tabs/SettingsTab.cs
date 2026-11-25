@@ -32,8 +32,8 @@ namespace AdsIAPKit.Editor
             GUILayout.Space(6);
 
             var infoStyle = new GUIStyle(EditorStyles.label) { wordWrap = true };
-            GUILayout.Label("AdsIAPKit v1.1.0 — Unified Ads & IAP manager for Unity.", infoStyle);
-            GUILayout.Label("Supports AdMob · Unity Ads · IronSource · AppLovin MAX · Unity IAP.", infoStyle);
+            GUILayout.Label("AdsIAPKit v2.0.0 — Unified Ads & IAP manager for Unity.", infoStyle);
+            GUILayout.Label("Supports AdMob · LevelPlay · Meta Audience Network (through mediation) · Unity IAP.", infoStyle);
             GUILayout.Space(6);
 
             EditorGUILayout.BeginHorizontal();
@@ -82,9 +82,7 @@ namespace AdsIAPKit.Editor
                 "Defined symbols detected:\n" +
                 $"  UNITY_IAP_ENABLED : {IsSymbolDefined("UNITY_IAP_ENABLED")}\n" +
                 $"  ADMOB_ENABLED     : {IsSymbolDefined("ADMOB_ENABLED")}\n" +
-                $"  UNITY_ADS_ENABLED : {IsSymbolDefined("UNITY_ADS_ENABLED")}\n" +
-                $"  IRONSOURCE_ENABLED: {IsSymbolDefined("IRONSOURCE_ENABLED")}\n" +
-                $"  APPLOVIN_ENABLED  : {IsSymbolDefined("APPLOVIN_ENABLED")}",
+                $"  LEVELPLAY_ENABLED : {IsSymbolDefined("LEVELPLAY_ENABLED")}",
                 MessageType.None);
         }
 
@@ -94,9 +92,7 @@ namespace AdsIAPKit.Editor
             GUILayout.Space(4);
 
             DrawSDKRow("AdMob (Google Mobile Ads)",   "https://developers.google.com/admob/unity/quick-start");
-            DrawSDKRow("Unity Ads",                   "https://docs.unity.com/ads/en-us/manual/UnityAdsHome");
-            DrawSDKRow("IronSource (LevelPlay)",      "https://developers.is.com/ironsource-mobile/unity/");
-            DrawSDKRow("AppLovin MAX",                "https://developers.applovin.com/en/unity/overview/integration");
+            DrawSDKRow("Unity LevelPlay",             "https://docs.unity.com/grow/levelplay/sdk/unity/package-integration/");
             DrawSDKRow("Unity IAP",                   "https://docs.unity3d.com/Manual/UnityIAP.html");
         }
 
@@ -132,8 +128,8 @@ namespace AdsIAPKit.Editor
             GUI.backgroundColor = Color.white;
         }
 
-        // Most SDK symbols come from the package's version defines, which this assembly shares,
-        // so they are checked at compile time; IronSource still needs a Scripting Define Symbol.
+        // SDK symbols come from the package's version defines, which this assembly shares,
+        // so they are checked at compile time.
         private static string IsSymbolDefined(string symbol)
         {
             bool defined;
@@ -145,11 +141,8 @@ namespace AdsIAPKit.Editor
 #if ADMOB_ENABLED
                 case "ADMOB_ENABLED": defined = true; break;
 #endif
-#if UNITY_ADS_ENABLED
-                case "UNITY_ADS_ENABLED": defined = true; break;
-#endif
-#if APPLOVIN_ENABLED
-                case "APPLOVIN_ENABLED": defined = true; break;
+#if LEVELPLAY_ENABLED
+                case "LEVELPLAY_ENABLED": defined = true; break;
 #endif
                 default: defined = AdsIAPKitSdkChecker.IsScriptingSymbolDefined(symbol); break;
             }

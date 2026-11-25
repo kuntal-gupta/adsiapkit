@@ -16,8 +16,8 @@
     "versionDefines": [
         { "name": "com.unity.purchasing",       "expression": "5.0.0", "define": "UNITY_IAP_ENABLED" },
         { "name": "com.google.ads.mobile",      "expression": "1.0.0", "define": "ADMOB_ENABLED" },
-        { "name": "com.unity.ads",              "expression": "4.0.0", "define": "UNITY_ADS_ENABLED" },
-        { "name": "com.applovin.mediation.ads", "expression": "1.0.0", "define": "APPLOVIN_ENABLED" },
+        { "name": "com.unity.services.levelplay", "expression": "9.0.0", "define": "LEVELPLAY_ENABLED" },
+        { "name": "com.unity.services.levelplay", "expression": "9.6.0", "define": "LEVELPLAY_9_6" },
         { "name": "com.unity.ads.ios-support",  "expression": "1.0.0", "define": "ATT_SUPPORT_ENABLED" },
         { "name": "com.unity.ugui",             "expression": "1.0.0", "define": "ADSIAPKIT_UGUI" },
         { "name": "com.unity.ugui",             "expression": "2.0.0", "define": "ADSIAPKIT_TMP" },
