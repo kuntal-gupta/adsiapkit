@@ -15,11 +15,19 @@ This guide takes a project from an empty install to a shipped game with ads, med
 
 ## 1. Install the kit
 
-**Package Manager → + → Add package from git URL…**
+Install it from OpenUPM:
+
+```bash
+openupm add com.puzzlecraftgames.adsiapkit
+```
+
+Or use **Package Manager → + → Add package from git URL…**:
 
 ```
-https://github.com/kuntal-gupta/adsiapkit.git#v1.3.3
+https://github.com/kuntal-gupta/adsiapkit.git#v2.0.0
 ```
+
+The [README](../README.md#1-add-the-package) shows how to add the OpenUPM registry to `manifest.json` by hand.
 
 Then open **Tools → AdsIAPKit → Setup Window**. The first time, it creates three assets in `Assets/Resources/AdsIAPKit/`:
 

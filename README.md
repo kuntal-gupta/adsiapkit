@@ -22,19 +22,50 @@ One API for mobile ads and in-app purchases in Unity. Pick an ad network in a se
 
 ### 1. Add the package
 
+#### From OpenUPM (recommended)
+
+Installing from [OpenUPM](https://openupm.com/packages/com.puzzlecraftgames.adsiapkit/) lists the kit under **My Registries** in Package Manager, with every version and an **Update** button when a new one is out.
+
+With the [OpenUPM CLI](https://openupm.com/docs/getting-started-cli.html):
+
+```bash
+openupm add com.puzzlecraftgames.adsiapkit
+```
+
+Or add the registry and the package to `Packages/manifest.json`:
+
+```json
+{
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": ["com.puzzlecraftgames.adsiapkit"]
+    }
+  ],
+  "dependencies": {
+    "com.puzzlecraftgames.adsiapkit": "2.0.0"
+  }
+}
+```
+
+If your manifest already has a `package.openupm.com` registry (the setup window adds one for the ad SDKs), add `com.puzzlecraftgames.adsiapkit` to its `scopes` instead of adding a second entry.
+
+#### From the git URL
+
 **Package Manager → + → Add package from git URL…**
 
 ```
-https://github.com/kuntal-gupta/adsiapkit.git#v1.3.3
+https://github.com/kuntal-gupta/adsiapkit.git#v2.0.0
 ```
 
 Or add it to `Packages/manifest.json`:
 
 ```json
-"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v1.3.3"
+"com.puzzlecraftgames.adsiapkit": "https://github.com/kuntal-gupta/adsiapkit.git#v2.0.0"
 ```
 
-The `#v1.3.3` tag pins a version. Use `#main` to follow the latest changes.
+The `#v2.0.0` tag pins a version. Use `#main` to follow the latest changes. Package Manager does not show updates for git packages: change the tag to upgrade.
 
 ### 2. Install the SDKs you need
 

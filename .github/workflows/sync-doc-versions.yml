@@ -1,0 +1,51 @@
+name: Sync doc versions
+
+# When a release tag is pushed, point the install examples in README.md and
+# Documentation~/SetupGuide.md at it and commit the change to main.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-doc-versions
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Skip unless this is the newest release
+        id: check
+        run: |
+          latest=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+          echo "pushed=$GITHUB_REF_NAME latest=$latest"
+          if [ "$GITHUB_REF_NAME" = "$latest" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "An older tag was pushed; the docs stay on $latest."
+          fi
+
+      - name: Rewrite install examples
+        if: steps.check.outputs.run == 'true'
+        run: bash .github/scripts/sync-doc-versions.sh "$GITHUB_REF_NAME"
+
+      - name: Commit to main
+        if: steps.check.outputs.run == 'true'
+        run: |
+          if git diff --quiet; then
+            echo "Docs already point at $GITHUB_REF_NAME."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -am "docs: point install examples at $GITHUB_REF_NAME"
+          git push origin HEAD:main
